@@ -1,46 +1,49 @@
 # Đàn đom đóm
 
-Món đồ chơi tương tác chạy ngay trên trình duyệt: hàng trăm chú đom đóm phát sáng bay trong đêm, bạn rê chuột hoặc chạm để điều khiển chúng.
+Một món đồ chơi nhỏ trên trình duyệt: hàng trăm chú đom đóm phát sáng bay lượn trong đêm, và bạn là người điều khiển chúng.
 
-*A tiny interactive firefly sandbox for the browser. One HTML file, no dependencies, works on desktop and phones.*
+**[Chơi ngay](https://<username>.github.io/<repo>/)**
 
-**Demo:** `https://<username>.github.io/<repo>/` (sau khi bật GitHub Pages, xem bên dưới)
+Chạy được trên máy tính và điện thoại, không cần cài đặt hay đăng ký gì.
 
-## Tính năng
+## Cách chơi
 
-- 3 chế độ: **Bay theo**, **Xoáy** (quay quanh con trỏ), **Tản ra** (tránh con trỏ)
-- 6 màu và chế độ **tất cả màu**
-- Tối đa 999 chú đom đóm, thả thêm hoặc giảm 50 con mỗi lần bấm
-- Tối ưu cho điện thoại: điều khiển bằng chạm, giao diện gọn, ẩn/hiện bảng điều khiển
-- Chuyển động theo thời gian thực, chạy đều trên màn hình 60 Hz và 120 Hz
-- Tôn trọng cài đặt giảm chuyển động của hệ thống
+1. Mở trang, đàn đom đóm sẽ tự bay lượn.
+2. Chọn một **chế độ** ở thanh điều khiển phía dưới.
+3. **Giữ chuột** (hoặc **giữ ngón tay** trên điện thoại) lên màn hình: cả đàn sẽ làm theo chế độ bạn đã chọn.
+4. **Nhả ra**: chúng lại bay tự do.
+5. Bấm **Thả thêm 50** hoặc **Giảm 50** để đổi số lượng, từ 100 đến 1000 chú.
+6. Bấm một **chấm màu** để đổi màu cả đàn. Chấm nhiều màu là chế độ **tất cả màu**.
+7. Bấm **Ẩn bảng** ở góc phải để chơi toàn màn hình, bấm **Hiện bảng** để mở lại.
 
-## Cách điều khiển
+## Ba chế độ
 
-| Thao tác | Máy tính | Điện thoại |
-| --- | --- | --- |
-| Cho đom đóm bay theo | Rê chuột | Chạm và kéo |
-| Kéo chúng lại gần | Giữ chuột | Giữ ngón tay |
-| Thả thêm | Bấm vào chỗ trống | Chạm nhanh |
+| Chế độ | Khi bạn giữ chuột hoặc ngón tay |
+| --- | --- |
+| Bay theo | Đàn đom đóm bay về phía bạn |
+| Xoáy | Chúng quay thành một vòng nhỏ quanh bạn |
+| Tản ra | Những chú ở gần bạn sẽ tránh ra xa |
 
-## Chạy trên máy
+## Vài mẹo
 
-Mở file `index.html` bằng trình duyệt. Không cần cài đặt hay build gì cả.
+- Chọn **Xoáy**, giữ chuột rồi kéo thật chậm để vòng đom đóm đi theo.
+- Thả lên **1000 con** rồi dùng **Tản ra** để xem cả đàn rẽ ra như nước.
+- Thử chế độ **tất cả màu** khi trời tối cho đẹp.
+- Máy bị giật? Bấm **Giảm 50** vài lần cho nhẹ bớt.
 
-## Đưa lên GitHub Pages
+## English
 
-1. Tạo repo mới trên GitHub và đẩy các file này lên (`index.html`, `README.md`, `LICENSE`).
-2. Vào **Settings → Pages**.
-3. Ở **Build and deployment**, chọn **Deploy from a branch**, branch `main`, thư mục `/ (root)`, rồi bấm **Save**.
-4. Sau khoảng một phút, trang sẽ chạy tại `https://<username>.github.io/<repo>/`.
+A tiny firefly sandbox that runs in your browser. Pick a mode, then press and hold the mouse (or your finger) to make the swarm follow, swirl around, or scatter away from you. Release and they drift freely. Use the buttons to add or remove 50 fireflies (100 to 1000), and pick a color or "all colors". Works on desktop and mobile.
 
-## Công nghệ
+## Dành cho người muốn chỉnh sửa
 
-HTML, CSS và JavaScript thuần với Canvas 2D. Font Be Vietnam Pro tải từ Google Fonts (có font hệ thống dự phòng).
+Cả trò chơi nằm trong một file `index.html`, dùng HTML, CSS và JavaScript thuần với Canvas, không cần build. Mở file bằng trình duyệt là chạy.
+
+Để đưa lên GitHub Pages: vào **Settings → Pages**, chọn **Deploy from a branch**, branch `main`, thư mục `/ (root)`, rồi bấm **Save**.
 
 ## Giấy phép
 
-[MIT](LICENSE)
+[MIT](LICENSE). Bạn được tự do dùng và chỉnh sửa, chỉ cần giữ lại tên tác giả.
 
 ---
 
