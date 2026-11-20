@@ -65,7 +65,7 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
 <canvas id="c" aria-label="Đàn đom đóm: rê chuột hoặc chạm để điều khiển"></canvas>
 <div class="title">
   <h1>Đàn đom đóm</h1>
-  <p id="hint">Rê chuột để chúng bay theo. Giữ chuột để kéo chúng lại gần. Bấm vào chỗ trống để thả thêm.</p>
+  <p id="hint">Giữ chuột để đàn đom đóm làm theo chế độ bạn chọn. Nhả chuột ra thì chúng bay tự do.</p>
   <p class="credit"><i></i><span>by ruii9326 (Nguyễn Duy Anh)</span></p>
 </div>
 <button class="panel-toggle" id="toggle" aria-expanded="true" aria-controls="bar">Ẩn bảng</button>
@@ -97,12 +97,12 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
   var COLORS=[[255,200,87],[111,227,214],[255,122,144],[150,230,110],[110,170,255],[185,140,255]];
   var sprites=COLORS.map(makeSprite);
   function pick(){return color===6?Math.floor(Math.random()*COLORS.length):color}
-  var color=0,mode='follow',MAX=999,flies=[],last=0;
+  var color=0,mode='follow',MAX=1000,MIN=100,flies=[],last=0;
   var ptr={x:0,y:0,active:false,down:false};
   var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
   var countEl=document.getElementById('count'),shown=-1;
 
-  if(touch)document.getElementById('hint').textContent='Chạm và kéo để chúng bay theo. Giữ yên để kéo chúng lại gần. Chạm nhanh để thả thêm.';
+  if(touch)document.getElementById('hint').textContent='Chạm giữ để đàn đom đóm làm theo chế độ bạn chọn. Nhấc tay ra thì chúng bay tự do.';
 
   function makeSprite(c){
     var s=document.createElement('canvas');s.width=s.height=64;
@@ -137,7 +137,7 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
     ctx.fillStyle=reduce?'rgba(16,26,58,1)':'rgba(16,26,58,'+Math.min(1,.2*dt)+')';
     ctx.fillRect(0,0,W,H);
     ctx.globalCompositeOperation='lighter';
-    var s=t/1000,k=ptr.down?3:1,dmp=Math.pow(.965,dt);
+    var s=t/1000,k=2,dmp=Math.pow(.965,dt);
     for(var i=0;i<flies.length;i++){
       var f=flies[i];
       f.w+=(Math.random()-.5)*.35*dt;
@@ -162,15 +162,15 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
   }
 
   function pos(e){var r=cv.getBoundingClientRect();ptr.x=e.clientX-r.left;ptr.y=e.clientY-r.top}
-  cv.addEventListener('pointermove',function(e){pos(e);ptr.active=true});
+  cv.addEventListener('pointermove',function(e){pos(e)});
   cv.addEventListener('pointerdown',function(e){
-    pos(e);ptr.active=true;ptr.down=true;spawn(ptr.x,ptr.y,12,14);
+    pos(e);ptr.active=true;ptr.down=true;
     try{cv.setPointerCapture(e.pointerId)}catch(_){}
   });
-  function up(e){ptr.down=false;if(e.pointerType!=='mouse')ptr.active=false}
+  function up(){ptr.down=false;ptr.active=false}
   cv.addEventListener('pointerup',up);
   cv.addEventListener('pointercancel',up);
-  cv.addEventListener('pointerleave',function(e){if(e.pointerType==='mouse'&&!ptr.down)ptr.active=false});
+  
   cv.addEventListener('contextmenu',function(e){e.preventDefault()});
 
   document.getElementById('modes').addEventListener('click',function(e){
@@ -182,7 +182,7 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
     [].forEach.call(this.children,function(x){x.setAttribute('aria-pressed',x===b)});
     for(var i=0;i<flies.length;i++){flies[i].c=pick()}
   });
-  document.getElementById('less').onclick=function(){flies.splice(0,Math.min(50,flies.length))};
+  document.getElementById('less').onclick=function(){flies.splice(0,Math.max(0,Math.min(50,flies.length-MIN)))};
   document.getElementById('more').onclick=function(){spawn(W/2,H/2,50,Math.min(W,H)*.3)};
   document.getElementById('reset').onclick=reset;
   var bar=document.getElementById('bar'),tg=document.getElementById('toggle');
