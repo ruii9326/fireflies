@@ -26,6 +26,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
 .title p{margin:.35rem 0 0;font-size:.85rem;line-height:1.5;color:var(--dim)}
 .title .credit{display:flex;align-items:center;gap:8px;margin-top:.6rem;font-size:.78rem;color:var(--ink);opacity:.85}
 .credit i{width:7px;height:7px;border-radius:50%;background:var(--amber);box-shadow:0 0 8px 2px rgba(255,200,87,.7);animation:blink 3.2s ease-in-out infinite}
+.title .tip{margin:.6rem 0 0;font-size:.8rem;line-height:1.5;color:var(--amber);transition:opacity 1.2s ease}
 @keyframes blink{0%,100%{opacity:.25}50%{opacity:1}}
 .panel-toggle{position:fixed;right:max(14px,env(safe-area-inset-right,0px));top:calc(env(safe-area-inset-top,0px) + 14px);
   border:1px solid var(--line);border-radius:10px;background:rgba(10,17,40,.78);padding:9px 12px}
@@ -66,6 +67,7 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
 <div class="title">
   <h1>Đàn đom đóm</h1>
   <p id="hint">Giữ chuột để đàn đom đóm làm theo chế độ bạn chọn. Nhả chuột ra thì chúng bay tự do.</p>
+  <p class="tip" id="tip"></p>
   <p class="credit"><i></i><span>by ruii9326 (Nguyễn Duy Anh)</span></p>
 </div>
 <button class="panel-toggle" id="toggle" aria-expanded="true" aria-controls="bar">Ẩn bảng</button>
@@ -97,11 +99,14 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
   var COLORS=[[255,200,87],[111,227,214],[255,122,144],[150,230,110],[110,170,255],[185,140,255]];
   var sprites=COLORS.map(makeSprite);
   function pick(){return color===6?Math.floor(Math.random()*COLORS.length):color}
-  var color=0,mode='follow',MAX=1000,MIN=100,flies=[],last=0;
+  var color=0,mode='follow',MAX=3000,MIN=100,flies=[],last=0;
   var ptr={x:0,y:0,active:false,down:false};
   var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
   var countEl=document.getElementById('count'),shown=-1;
 
+  var tip=document.getElementById('tip');
+  tip.textContent=touch?'Gợi ý: thả hơn 2000 chú đom đóm để cả bầu trời cùng sáng lên. Xoay ngang điện thoại cho đàn có thêm chỗ bay.':'Gợi ý: nhấn F11 để vào toàn màn hình, rồi thả hơn 2000 chú đom đóm để cả bầu trời cùng sáng lên.';
+  setTimeout(function(){tip.style.opacity=0;setTimeout(function(){tip.style.display='none'},1300)},16000);
   if(touch)document.getElementById('hint').textContent='Chạm giữ để đàn đom đóm làm theo chế độ bạn chọn. Nhấc tay ra thì chúng bay tự do.';
 
   function makeSprite(c){
@@ -145,7 +150,7 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
       if(ptr.active){
         var dx=ptr.x-f.x,dy=ptr.y-f.y,d=Math.sqrt(dx*dx+dy*dy)+1,nx=dx/d,ny=dy/d,p=Math.min(260/(d+40),4)*.1*k*dt;
         if(mode==='follow'){f.vx+=nx*p;f.vy+=ny*p}
-        else if(mode==='swirl'){var e=Math.max(-150,Math.min(200,d-60)),tg=.14*Math.min(1,d/40)*k*dt;f.vx+=nx*e*.003*k*dt+(-ny)*tg;f.vy+=ny*e*.003*k*dt+nx*tg}
+        else if(mode==='swirl'){var Rt=i<1000?58:131,vr=Math.max(-4,Math.min(6,(d-Rt)*.08)),vt=3.2,st=Math.min(1,.12*dt);f.vx+=((nx*vr-ny*vt)-f.vx)*st;f.vy+=((ny*vr+nx*vt)-f.vy)*st}
         else{ if(d<88){f.vx-=nx*p*2.2;f.vy-=ny*p*2.2} }
       }
       f.vx*=dmp;f.vy*=dmp;

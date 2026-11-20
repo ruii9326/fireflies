@@ -12,7 +12,7 @@ Chạy được trên máy tính và điện thoại, không cần cài đặt h
 2. Chọn một **chế độ** ở thanh điều khiển phía dưới.
 3. **Giữ chuột** (hoặc **giữ ngón tay** trên điện thoại) lên màn hình: cả đàn sẽ làm theo chế độ bạn đã chọn.
 4. **Nhả ra**: chúng lại bay tự do.
-5. Bấm **Thả thêm 50** hoặc **Giảm 50** để đổi số lượng, từ 100 đến 1000 chú.
+5. Bấm **Thả thêm 50** hoặc **Giảm 50** để đổi số lượng, từ 100 đến 3000 chú.
 6. Bấm một **chấm màu** để đổi màu cả đàn. Chấm nhiều màu là chế độ **tất cả màu**.
 7. Bấm **Ẩn bảng** ở góc phải để chơi toàn màn hình, bấm **Hiện bảng** để mở lại.
 
@@ -21,19 +21,20 @@ Chạy được trên máy tính và điện thoại, không cần cài đặt h
 | Chế độ | Khi bạn giữ chuột hoặc ngón tay |
 | --- | --- |
 | Bay theo | Đàn đom đóm bay về phía bạn |
-| Xoáy | Chúng quay thành một vòng nhỏ quanh bạn |
+| Xoáy | Chúng quay thành hai vòng quanh bạn: vòng trong chứa tối đa 1000 chú, từ chú thứ 1001 trở đi bay ở vòng ngoài rộng gấp đôi |
 | Tản ra | Những chú ở gần bạn sẽ tránh ra xa |
 
 ## Vài mẹo
 
 - Chọn **Xoáy**, giữ chuột rồi kéo thật chậm để vòng đom đóm đi theo.
-- Thả lên **1000 con** rồi dùng **Tản ra** để xem cả đàn rẽ ra như nước.
+- Nhấn **F11** để vào toàn màn hình (trên điện thoại thì xoay ngang máy), rồi thả hơn **2000 con** để cả bầu trời cùng sáng lên. Đây là cách xem đẹp nhất.
+- Thả lên **3000 con** rồi dùng **Tản ra** để xem cả đàn rẽ ra như nước.
 - Thử chế độ **tất cả màu** khi trời tối cho đẹp.
 - Máy bị giật? Bấm **Giảm 50** vài lần cho nhẹ bớt.
 
 ## English
 
-A tiny firefly sandbox that runs in your browser. Pick a mode, then press and hold the mouse (or your finger) to make the swarm follow, swirl around, or scatter away from you. Release and they drift freely. Use the buttons to add or remove 50 fireflies (100 to 1000), and pick a color or "all colors". Works on desktop and mobile.
+A tiny firefly sandbox that runs in your browser. Pick a mode, then press and hold the mouse (or your finger) to make the swarm follow, swirl around, or scatter away from you. Release and they drift freely. Use the buttons to add or remove 50 fireflies (100 to 3000), and pick a color or "all colors". Works on desktop and mobile.
 
 ## Dành cho người muốn chỉnh sửa
 
