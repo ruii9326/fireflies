@@ -2,7 +2,7 @@
 
 Một món đồ chơi nhỏ trên trình duyệt: hàng trăm chú đom đóm phát sáng bay lượn trong đêm, và bạn là người điều khiển chúng.
 
-**[Chơi ngay]([https://<username>.github.io/<repo>/](https://ruii9326.github.io/fireflies/)**
+**[Chơi ngay](https://ruii9326.github.io/fireflies/)**
 
 Chạy được trên máy tính và điện thoại, không cần cài đặt hay đăng ký gì.
 
