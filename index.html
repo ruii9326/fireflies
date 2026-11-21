@@ -99,13 +99,13 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
   var COLORS=[[255,200,87],[111,227,214],[255,122,144],[150,230,110],[110,170,255],[185,140,255]];
   var sprites=COLORS.map(makeSprite),core=makeCore();
   function pick(){return color===6?Math.floor(Math.random()*COLORS.length):color}
-  var color=0,mode='follow',MAX=3000,MIN=100,flies=[],last=0,pw=0;
+  var color=0,mode='follow',MAX=2000,MIN=100,flies=[],last=0,pw=0;
   var ptr={x:0,y:0,active:false,down:false},lx=0,ly=0,cvx=0,cvy=0;
   var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
   var countEl=document.getElementById('count'),shown=-1;
 
   var tip=document.getElementById('tip');
-  tip.textContent=touch?'Gợi ý: thả hơn 2000 chú đom đóm để cả bầu trời cùng sáng lên. Xoay ngang điện thoại cho đàn có thêm chỗ bay.':'Gợi ý: nhấn F11 để vào toàn màn hình, rồi thả hơn 2000 chú đom đóm để cả bầu trời cùng sáng lên.';
+  tip.textContent=touch?'Gợi ý: thả đủ 2000 chú đom đóm để cả bầu trời cùng sáng lên. Xoay ngang điện thoại cho đàn có thêm chỗ bay.':'Gợi ý: nhấn F11 để vào toàn màn hình, rồi thả đủ 2000 chú đom đóm để cả bầu trời cùng sáng lên.';
   if(touch)document.getElementById('hint').textContent='Chạm giữ để đàn đom đóm làm theo chế độ bạn chọn. Nhấc tay ra thì chúng bay tự do.';
 
   function makeSprite(c){
@@ -161,7 +161,7 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
       if(cspd>40){cvx*=40/cspd;cvy*=40/cspd;cspd=40}
     }else{cvx=cvy=0}
     lx=ptr.x;ly=ptr.y;exc=Math.min(cspd*.012,.35);
-    var sw=mode==='swirl'?pw:0,crisp=flies.length<=2000;
+    var sw=mode==='swirl'?pw:0,crisp=flies.length<=2000,DK=Math.max(220,Math.min(W,H)*.46);
     for(var i=0;i<flies.length;i++){
       var f=flies[i];
       f.tv=f.tv*.94+(Math.random()-.5)*.05*dt;f.w+=f.tv*dt;
@@ -171,12 +171,12 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
         if(mode==='follow'){f.vx+=nx*p;f.vy+=ny*p}
         else if(mode==='swirl'){
           /* lốc xoáy: dây chun đàn hồi nối với con trỏ + quán tính thật. Con trỏ nhanh thì đàn bị quăng ra rồi bị kéo lại */
-          var Rt=(34+110*Math.pow(f.h,1.4))*f.rj,
+          var Rt=(36+(DK-36)*Math.pow(f.h,1.4))*f.rj,
               rx=f.vx-cvx,ry=f.vy-cvy,
               vtan=-rx*ny+ry*nx,vrad=rx*nx+ry*ny,
               e=d-Rt,kr=.12*(1-.55*f.h),
               ar=(e>0?kr*e+.0004*e*e:kr*e*.5)+vtan*vtan/Math.max(d,12)*.95-.08*vrad,
-              at=(13.4*(1+exc)*(1.1-.35*f.h)*(.6+.4*Math.min(1,Rt/70))-vtan)*.07,
+              at=(13.4*(1+exc)*Math.max(.5,Math.min(1,Math.sqrt(70/Rt)))-vtan)*.07,
               g=pw*dt/f.m;
           ar=Math.max(-8,Math.min(8,ar));
           f.vx+=(nx*ar-ny*at)*g;f.vy+=(ny*ar+nx*at)*g}
