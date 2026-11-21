@@ -3,140 +3,176 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#101a3a">
+<meta name="theme-color" content="#02030c">
 <meta name="description" content="Đàn đom đóm: món đồ chơi tương tác, rê chuột hoặc chạm để điều khiển hàng trăm chú đom đóm phát sáng. By ruii9326 (Nguyễn Duy Anh).">
 <meta name="author" content="ruii9326 (Nguyễn Duy Anh)">
 <meta property="og:title" content="Đàn đom đóm">
 <meta property="og:description" content="Rê chuột hoặc chạm để điều khiển đàn đom đóm phát sáng.">
 <title>Đàn đom đóm</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='12' fill='%23ffc857' fill-opacity='.25'/%3E%3Ccircle cx='16' cy='16' r='5' fill='%23ffc857'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600&display=swap">
 <style>
 :root{
   color-scheme: dark;
-  --night:#101a3a; --deep:#0a1128; --ink:#e8ecff; --dim:#8f9acb; --line:#2b3868; --amber:#ffc857;
-  box-sizing:border-box;
+  --deep:#0a1128; --ink:#e8ecff; --dim:#a2acd9; --line:#2f3c70; --amber:#ffc857;
+  --panel:rgba(8,13,34,.8);
 }
-html,body{height:100%;margin:0;background:var(--deep);overflow:hidden;overscroll-behavior:none}
-body{font-family:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);
-  -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
-canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
-.title{position:fixed;left:max(20px,env(safe-area-inset-left,0px));top:calc(env(safe-area-inset-top,0px) + 18px);pointer-events:none;max-width:calc(100vw - 150px)}
+html,body{height:100%;margin:0;overflow:hidden;overscroll-behavior:none}
+html{background:#02030a}
+/* bầu trời sao đêm: nền chuyển màu từ đen chàm ở đỉnh tới tím hồng ở chân trời.
+   Dải ngân hà và các vì sao được vẽ trên canvas #bg và #sky. */
+body{
+  font-family:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);
+  -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;
+  background:
+    radial-gradient(ellipse 125% 52% at 50% 118%,rgba(190,92,160,.40) 0%,rgba(112,72,186,.30) 38%,rgba(112,72,186,0) 74%),
+    radial-gradient(ellipse 56% 40% at 86% 14%,rgba(66,98,208,.24) 0%,rgba(66,98,208,0) 70%),
+    radial-gradient(ellipse 50% 36% at 10% 42%,rgba(126,70,176,.17) 0%,rgba(126,70,176,0) 70%),
+    linear-gradient(180deg,#010208 0%,#040a22 36%,#0b1546 68%,#1e1a5a 100%)}
+canvas{position:fixed;top:0;left:0;inset:0;width:100%;height:100%;display:block}
+#bg,#sky{pointer-events:none}
+#c{touch-action:none;cursor:crosshair}
+.title{position:fixed;left:max(20px,env(safe-area-inset-left,0px));top:calc(env(safe-area-inset-top,0px) + 18px);pointer-events:none;
+  max-width:calc(100vw - 150px);text-shadow:0 1px 10px rgba(2,3,12,.95)}
 .title h1{margin:0;font-size:1.35rem;font-weight:600;letter-spacing:.01em}
 .title p{margin:.35rem 0 0;font-size:.85rem;line-height:1.5;color:var(--dim)}
 .title .credit{display:flex;align-items:center;gap:8px;margin-top:.6rem;font-size:.78rem;color:var(--ink);opacity:.85}
 .credit i{width:7px;height:7px;border-radius:50%;background:var(--amber);box-shadow:0 0 8px 2px rgba(255,200,87,.7);animation:blink 3.2s ease-in-out infinite}
-.title .tip{margin:.6rem 0 0;font-size:.8rem;line-height:1.5;color:var(--amber);transition:opacity 1.2s ease}
+.title .tip{margin:.6rem 0 0;font-size:.8rem;line-height:1.5;color:var(--amber)}
 @keyframes blink{0%,100%{opacity:.25}50%{opacity:1}}
-.panel-toggle{position:fixed;right:max(14px,env(safe-area-inset-right,0px));top:calc(env(safe-area-inset-top,0px) + 14px);
-  border:1px solid var(--line);border-radius:10px;background:rgba(10,17,40,.78);padding:9px 12px}
-.bar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 16px);
-  display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center;
-  width:max-content;max-width:calc(100vw - 24px);padding:10px 12px;border-radius:16px;
-  background:rgba(10,17,40,.78);border:1px solid var(--line);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
-.bar.hide{display:none}
-.seg{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;flex:1 1 100%}
 button{font:inherit;font-size:.82rem;color:var(--ink);background:transparent;border:0;padding:8px 12px;cursor:pointer;touch-action:manipulation}
 button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
-.seg button{border:1px solid var(--line);border-radius:10px}
+.panel-toggle{position:fixed;right:max(14px,env(safe-area-inset-right,0px));top:calc(env(safe-area-inset-top,0px) + 14px);
+  border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:9px 12px;
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.bar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 16px);
+  display:flex;gap:6px 10px;align-items:center;flex-wrap:wrap;justify-content:center;
+  width:max-content;max-width:calc(100vw - 24px);padding:7px 10px;border-radius:14px;
+  background:var(--panel);border:1px solid var(--line);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.bar.hide{display:none}
+.btn{border:1px solid var(--line);border-radius:10px;padding:6px 10px;font-size:.78rem}
+.btn[aria-disabled="true"]{opacity:.35;cursor:default}
+.modewrap{position:relative}
+#modebtn{display:flex;align-items:center;gap:6px;white-space:nowrap}
+.seg{position:absolute;left:0;bottom:calc(100% + 14px);display:flex;flex-direction:column;flex-wrap:nowrap;justify-content:flex-start;gap:2px;padding:6px;min-width:190px;
+  max-height:calc(100vh - 150px);max-height:calc(100dvh - 150px);overflow-y:auto;border:1px solid var(--line);border-radius:14px;
+  background:rgba(10,17,40,.95);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.seg[hidden]{display:none}
+.seg button{flex:0 0 auto;border:0;border-radius:9px;padding:10px 14px;text-align:left;white-space:nowrap;font-size:.85rem}
 .seg button[aria-pressed="true"]{background:var(--ink);color:var(--deep)}
-.btn{border:1px solid var(--line);border-radius:10px}
-.btn:hover{border-color:var(--dim)}
-.dots{display:flex;gap:8px;padding:0 4px}
-.dot{width:22px;height:22px;border-radius:50%;padding:0;border:2px solid transparent}
+.dots{display:flex;gap:6px;padding:0 2px}
+.dot{width:18px;height:18px;border-radius:50%;padding:0;border:2px solid transparent}
 .dot[aria-pressed="true"]{border-color:var(--ink)}
-.count{font-size:.8rem;color:var(--dim);min-width:4.5em;text-align:right}
+.count{font-size:.74rem;color:var(--dim);min-width:3.6em;text-align:right}
+@media (hover:hover){.btn:not([aria-disabled="true"]):hover{border-color:var(--dim)}}
+/* tablet và mọi màn hình cảm ứng: nút to hơn cho dễ chạm */
+@media (pointer:coarse){
+  .dot{width:28px;height:28px}
+  .btn{padding:10px 14px;font-size:.84rem}
+  .seg button{padding:13px 16px;font-size:.92rem}
+  .count{font-size:.8rem}
+}
+/* điện thoại */
 @media (max-width:640px){
   .title{max-width:calc(100vw - 130px)}
   .title h1{font-size:1.15rem}
   .title p{font-size:.78rem}
-  .bar{left:10px;right:10px;transform:none;width:auto;max-width:none;gap:8px;
-    bottom:calc(env(safe-area-inset-bottom,0px) + 10px)}
-  .seg{flex:1 1 100%}
-  .seg button{flex:1 1 28%;padding:12px 4px}
-  .dots{flex:1 1 100%;justify-content:space-between;padding:2px 6px}
-  .dot{width:34px;height:34px}
-  .btn{flex:1;padding:12px 6px}
-  .count{flex:1 1 100%;text-align:center;min-width:0}
+  .bar{left:max(8px,env(safe-area-inset-left,0px));right:max(8px,env(safe-area-inset-right,0px));transform:none;width:auto;max-width:none;
+    gap:6px;padding:6px 8px;bottom:calc(env(safe-area-inset-bottom,0px) + 8px)}
+  .seg{min-width:min(240px,calc(100vw - 32px))}
+  .dots{order:3;flex:1 1 100%;justify-content:space-between;gap:0;padding:2px 4px}
+  .dot{width:26px;height:26px}
+  .btn{flex:0 0 auto;padding:9px 11px;font-size:.78rem}
+  .count{margin-left:auto;min-width:0}
 }
-@media (prefers-reduced-motion:reduce){canvas{cursor:default}.credit i{animation:none}}
-/* menu gọn */
-.bar{gap:6px 10px;padding:7px 10px;border-radius:14px}
-.seg{flex:0 1 auto;flex-wrap:nowrap;gap:2px;padding:2px;border:1px solid var(--line);border-radius:10px;overflow-x:auto;justify-content:flex-start;max-width:100%;scrollbar-width:none}
-.seg::-webkit-scrollbar{display:none}
-.seg button{border:0;border-radius:8px;padding:6px 10px;font-size:.78rem;white-space:nowrap;flex:0 0 auto}
-.dots{gap:6px;padding:0 2px}
-.dot{width:18px;height:18px}
-.btn{padding:6px 10px;font-size:.78rem}
-.count{font-size:.74rem;min-width:3.6em}
-@media (max-width:640px){
-  .bar{left:8px;right:8px;gap:6px;padding:6px 8px;bottom:calc(env(safe-area-inset-bottom,0px) + 8px)}
-  .seg{flex:1 1 100%}
-  .seg button{flex:0 0 auto;padding:9px 11px}
-  .dots{flex:1 1 auto;justify-content:flex-start;gap:9px;padding:0 2px}
-  .dot{width:24px;height:24px}
-  .btn{flex:0 0 auto;padding:9px 11px}
-  .count{flex:0 0 auto;margin-left:auto;min-width:0}
+/* màn hình thấp (điện thoại nằm ngang): thu gọn chữ để không che đàn đom đóm */
+@media (max-height:480px){
+  .title{top:calc(env(safe-area-inset-top,0px) + 10px)}
+  .title h1{font-size:1.05rem}
+  .title p{font-size:.72rem;margin-top:.25rem}
+  .title .credit{margin-top:.35rem}
+  .panel-toggle{top:calc(env(safe-area-inset-top,0px) + 8px)}
+  .bar{bottom:calc(env(safe-area-inset-bottom,0px) + 6px)}
+  .seg{max-height:calc(100vh - 90px);max-height:calc(100dvh - 90px)}
 }
+@media (prefers-reduced-motion:reduce){#c{cursor:default}.credit i{animation:none}}
 </style>
 </head>
 <body>
-<canvas id="c" aria-label="Đàn đom đóm: rê chuột hoặc chạm để điều khiển"></canvas>
+<canvas id="bg" aria-hidden="true"></canvas>
+<canvas id="sky" aria-hidden="true"></canvas>
+<canvas id="c" role="img" aria-label="Đàn đom đóm: rê chuột hoặc chạm để điều khiển"></canvas>
 <div class="title">
   <h1>Đàn đom đóm</h1>
   <p id="hint">Giữ chuột để đàn đom đóm làm theo chế độ bạn chọn. Nhả chuột ra thì chúng bay tự do.</p>
   <p class="tip" id="tip"></p>
   <p class="credit"><i></i><span>by ruii9326 (Nguyễn Duy Anh)</span></p>
 </div>
-<button class="panel-toggle" id="toggle" aria-expanded="true" aria-controls="bar">Ẩn bảng</button>
+<button class="panel-toggle" id="toggle" type="button" aria-expanded="true" aria-controls="bar">Ẩn bảng</button>
 <div class="bar" id="bar" role="group" aria-label="Điều khiển">
-  <div class="seg" id="modes">
-    <button data-m="follow" aria-pressed="true">Bay theo</button>
-    <button data-m="swirl" aria-pressed="false">Xoáy</button>
-    <button data-m="flee" aria-pressed="false">Tản ra</button>
-    <button data-m="hole" aria-pressed="false">Hố đen</button>
-    <button data-m="trail" aria-pressed="false">Vẽ sáng</button>
-    <button data-m="sync" aria-pressed="false">Nhấp nháy</button>
-    <button data-m="shape" aria-pressed="false">Tạo hình</button>
-    <button data-m="flock" aria-pressed="false">Bầy</button>
-    <button data-m="fire" aria-pressed="false">Pháo hoa</button>
-  </div>
+  <div class="modewrap"><button class="btn" id="modebtn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="modes">☰ <span id="modename">Bay theo</span> ▾</button>
+  <div class="seg" id="modes" role="group" aria-label="Chế độ" hidden>
+    <button type="button" data-m="follow" aria-pressed="true">Bay theo</button>
+    <button type="button" data-m="swirl" aria-pressed="false">Xoáy</button>
+    <button type="button" data-m="flee" aria-pressed="false">Tản ra</button>
+    <button type="button" data-m="hole" aria-pressed="false">Hố đen</button>
+    <button type="button" data-m="trail" aria-pressed="false">Vẽ sáng</button>
+    <button type="button" data-m="sync" aria-pressed="false">Nhấp nháy</button>
+    <button type="button" data-m="shape" aria-pressed="false">Tạo hình</button>
+    <button type="button" data-m="flock" aria-pressed="false">Bầy</button>
+    <button type="button" data-m="fire" aria-pressed="false">Pháo hoa</button>
+  </div></div>
   <div class="dots" id="dots">
-    <button class="dot" data-c="0" style="background:#ffc857" aria-label="Màu hổ phách" aria-pressed="true"></button>
-    <button class="dot" data-c="1" style="background:#6fe3d6" aria-label="Màu xanh ngọc" aria-pressed="false"></button>
-    <button class="dot" data-c="2" style="background:#ff7a90" aria-label="Màu hồng" aria-pressed="false"></button>
-    <button class="dot" data-c="3" style="background:#96e66e" aria-label="Màu xanh lá" aria-pressed="false"></button>
-    <button class="dot" data-c="4" style="background:#6eaaff" aria-label="Màu xanh dương" aria-pressed="false"></button>
-    <button class="dot" data-c="5" style="background:#b98cff" aria-label="Màu tím" aria-pressed="false"></button>
-    <button class="dot" data-c="6" style="background:conic-gradient(#ffc857,#6fe3d6,#ff7a90,#96e66e,#6eaaff,#b98cff,#ffc857)" aria-label="Tất cả màu" aria-pressed="false"></button>
+    <button type="button" class="dot" data-c="0" style="background:#ffc857" aria-label="Màu hổ phách" aria-pressed="true"></button>
+    <button type="button" class="dot" data-c="1" style="background:#6fe3d6" aria-label="Màu xanh ngọc" aria-pressed="false"></button>
+    <button type="button" class="dot" data-c="2" style="background:#ff7a90" aria-label="Màu hồng" aria-pressed="false"></button>
+    <button type="button" class="dot" data-c="3" style="background:#96e66e" aria-label="Màu xanh lá" aria-pressed="false"></button>
+    <button type="button" class="dot" data-c="4" style="background:#6eaaff" aria-label="Màu xanh dương" aria-pressed="false"></button>
+    <button type="button" class="dot" data-c="5" style="background:#b98cff" aria-label="Màu tím" aria-pressed="false"></button>
+    <button type="button" class="dot" data-c="6" style="background:conic-gradient(#ffc857,#6fe3d6,#ff7a90,#96e66e,#6eaaff,#b98cff,#ffc857)" aria-label="Tất cả màu" aria-pressed="false"></button>
   </div>
-  <button class="btn" id="less" title="Giảm 50 chú">−50</button>
-  <button class="btn" id="more" title="Thả thêm 50 chú">+50</button>
-  <button class="btn" id="reset">Làm lại</button>
-  <span class="count" id="count"></span>
+  <button type="button" class="btn" id="less" aria-disabled="false" title="Giảm 50 chú (tối thiểu 100). Giữ để giảm nhanh.">−50</button>
+  <button type="button" class="btn" id="more" aria-disabled="false" title="Thả thêm 50 chú (tối đa 1500). Giữ để thả nhanh.">+50</button>
+  <button type="button" class="btn" id="reset" title="Về lại 150 chú">Làm lại</button>
+  <span class="count" id="count" aria-live="polite"></span>
 </div>
 <script>
 (function(){
-  var cv=document.getElementById('c'),ctx=cv.getContext('2d');
-  var touch=window.matchMedia&&matchMedia('(pointer: coarse)').matches;
-  var W=0,H=0,DPR=Math.min(window.devicePixelRatio||1,touch?1.5:2);
+  var cv=document.getElementById('c'),ctx=cv.getContext('2d'),
+      bgc=document.getElementById('bg'),bctx=bgc.getContext('2d'),
+      sk=document.getElementById('sky'),sctx=sk.getContext('2d');
+  var touch=!!(window.matchMedia&&matchMedia('(pointer: coarse)').matches);
+  var reduce=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
+  var W=0,H=0,DPR=1,oldW=0,oldH=0,rsT=0;
+  /* số lượng đom đóm: luôn nằm trong khoảng MIN..MAX, mở web lên là DEF */
+  var MIN=100,MAX=1500,DEF=150,STEP=50;
+  /* hướng tia sáng của hố đen: PC bắn ngang, điện thoại bắn dọc, tablet theo chiều dài của màn hình */
+  var JV=false,JSPAN=400;
   var COLORS=[[255,200,87],[111,227,214],[255,122,144],[150,230,110],[110,170,255],[185,140,255]];
   var sprites=COLORS.map(makeSprite),core=makeCore();
-  function pick(){return color===6?Math.floor(Math.random()*COLORS.length):color}
-  var color=0,mode='follow',MAX=2000,MIN=100,flies=[],last=0,pw=0,pr=0,fw=null,fl=null,rp=null,hb=0;
-  var ptr={x:0,y:0,active:false,down:false,t0:0},lx=0,ly=0,cvx=0,cvy=0;
-  var trl=[],head=new Int32Array(0),nxt=new Int32Array(0),shapeIdx=0,spts=null,shapeCache=[];
+  var color=0,mode='follow',flies=[],last=0,pw=0,pr=0,fw=null,fl=null,rp=null,hb=0,fa=16.7,lite=false;
+  var ptr={x:0,y:0,active:false,down:false,t0:0},pid=-1,lx=0,ly=0,cvx=0,cvy=0;
+  var trl=[],head=new Int32Array(0),nxt=new Int32Array(0),shapeIdx=0,spts=null,shapeCache=[],fontOK=false;
   var SHAPES=['Trái tim','Vòng tròn','Ngôi sao','Chữ'];
-  var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var countEl=document.getElementById('count'),shown=-1;
+  var countEl=document.getElementById('count'),lessB=document.getElementById('less'),moreB=document.getElementById('more'),shown=-1;
+  function pick(){return color===6?Math.floor(Math.random()*COLORS.length):color}
 
-  var tip=document.getElementById('tip');
-  tip.textContent=touch?'Gợi ý: thả khoảng 1000 chú đom đóm để cả bầu trời cùng sáng lên. Xoay ngang điện thoại cho đàn có thêm chỗ bay.':'Gợi ý: nhấn F11 để vào toàn màn hình, rồi thả khoảng 1000 chú đom đóm để cả bầu trời cùng sáng lên.';
-  
+  var mac=/Mac|iPhone|iPad/i.test(navigator.platform||navigator.userAgent||'');
+  document.getElementById('tip').textContent=touch
+    ?'Gợi ý: thả khoảng 1000 chú đom đóm để cả bầu trời cùng sáng lên.'
+    :'Gợi ý: nhấn '+(mac?'Control + Command + F':'F11')+' để vào toàn màn hình, rồi thả khoảng 1000 chú đom đóm để cả bầu trời cùng sáng lên.';
+
+  /* chữ "Đom đóm" chỉ được lấy mẫu sau khi font tải xong, nếu không đàn sẽ xếp theo font dự phòng */
+  if(document.fonts&&document.fonts.load){
+    document.fonts.load('600 40px "Be Vietnam Pro"','Đom đóm').then(done,done);
+  }else fontOK=true;
+  function done(){fontOK=true;shapeCache[3]=null;if(mode==='shape'&&shapeIdx===3)spts=buildShape(3)}
 
   function makeSprite(c){
-    var s=document.createElement('canvas');s.width=s.height=256;
-    var g=s.getContext('2d'),r=g.createRadialGradient(128,128,0,128,128,128),k=c[0]+','+c[1]+','+c[2];
+    var s=document.createElement('canvas');s.width=s.height=128;
+    var g=s.getContext('2d'),r=g.createRadialGradient(64,64,0,64,64,64),k=c[0]+','+c[1]+','+c[2];
     r.addColorStop(0,'rgba(255,255,255,1)');
     r.addColorStop(.09,'rgba(255,255,255,1)');
     r.addColorStop(.13,'rgba('+k+',1)');
@@ -145,7 +181,7 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
     r.addColorStop(.5,'rgba('+k+',.08)');
     r.addColorStop(.75,'rgba('+k+',.02)');
     r.addColorStop(1,'rgba('+k+',0)');
-    g.fillStyle=r;g.fillRect(0,0,256,256);return s;
+    g.fillStyle=r;g.fillRect(0,0,128,128);return s;
   }
   function makeCore(){
     var s=document.createElement('canvas');s.width=s.height=32;
@@ -154,19 +190,20 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
     g.fillStyle=r;g.fillRect(0,0,32,32);return s;
   }
   function setHint(){
-    var V=touch?'Chạm giữ':'Giữ chuột',C=touch?'Chạm':'Nhấp chuột';
-    var H={follow:V+' để đàn đom đóm bay theo con trỏ. Nhả ra thì chúng bay tự do.',
+    var V=touch?'Chạm giữ':'Giữ chuột',C=touch?'Chạm':'Nhấp chuột',
+        jets=JV?'lên trên và xuống dưới':'sang trái và sang phải';
+    var T={follow:V+' để đàn đom đóm bay theo con trỏ. Nhả ra thì chúng bay tự do.',
       swirl:V+' để đàn xoáy quanh con trỏ như đĩa sao quanh hố đen. Kéo nhanh để quăng đàn ra.',
       flee:V+' để đẩy đàn ra xa con trỏ.',
-      hole:V+' để hút đàn vào hố đen. Chúng bị phóng ra thành hai tia sáng ở hai cực.',
+      hole:V+' để hút đàn vào hố đen. Chúng bị phóng ra thành hai tia sáng '+jets+'.',
       trail:V+' rồi di chuyển để vẽ bằng ánh sáng.',
       sync:V+' để nhịp nhấp nháy lan ra như sóng và cả đàn sáng cùng nhịp.',
       shape:V+' để đàn xếp thành hình. Bấm lại nút này để đổi hình.',
       flock:V+' để dẫn đầu bầy. Đàn tự bay theo bầy như chim sáo.',
       fire:C+' để bắn pháo hoa.'};
-    document.getElementById('hint').textContent=H[mode];
+    document.getElementById('hint').textContent=T[mode];
   }
-  function explode(x,y){
+  function explode(){
     var c0=color===6?Math.floor(Math.random()*COLORS.length):color;
     for(var i=0;i<flies.length;i++){
       var f=flies[i],a=Math.random()*6.283,sp=(Math.random()<.7?10:3+Math.random()*8)*(.9+Math.random()*.25);
@@ -184,20 +221,164 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
       for(i=0;i<n;i++){var u=i/n*10,e0=Math.floor(u),ff=u-e0,A=V[e0%10],B=V[(e0+1)%10];P.push([A[0]+(B[0]-A[0])*ff,A[1]+(B[1]-A[1])*ff])}
     }else{
       var c=document.createElement('canvas');c.width=640;c.height=200;
-      var g=c.getContext('2d');g.fillStyle='#fff';g.font='700 150px "Be Vietnam Pro",system-ui,sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText('Đom đóm',320,100);
+      var g=c.getContext('2d');g.fillStyle='#fff';g.font='600 150px "Be Vietnam Pro",system-ui,sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText('Đom đóm',320,100);
       var d=g.getImageData(0,0,640,200).data;
       for(var y=0;y<200;y+=4)for(var x=0;x<640;x+=4)if(d[(y*640+x)*4+3]>128)P.push([(x-320)/320,(y-100)/320]);
       if(!P.length)P.push([0,0]);
+      if(!fontOK)return P;
     }
     return shapeCache[k]=P;
   }
-  function resize(){
-    W=innerWidth;H=innerHeight;
-    cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);
-    ctx.setTransform(DPR,0,0,DPR,0,0);
-    ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
-    ctx.fillStyle='#101a3a';ctx.fillRect(0,0,W,H);
+
+  /* ===== bầu trời sao đêm ===== */
+  function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;var t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+  var PAL=[[255,255,255],[200,220,255],[170,195,255],[255,236,205],[255,214,190]];
+  /* sao nhấp nháy: sinh một lần ở toạ độ chuẩn hoá nên đổi kích thước màn hình không làm sao nhảy chỗ.
+     Mỗi sao có nhịp riêng gồm ba sóng lệch nhau (nhanh, vừa, chậm) và biên độ riêng, nên độ sáng chập chờn bất định như sao thật */
+  var PALCSS=PAL.map(function(c){return'rgb('+c[0]+','+c[1]+','+c[2]+')'});
+  var TW=[],TWG=[[],[],[],[],[]],nT=0,nBig=0,shoot=null,skyT=0,nextShoot=4000;
+  (function(){var R=rng(99);for(var i=0;i<1000;i++){
+    var big=i<14,g=Math.floor(R()*PAL.length);
+    TW.push({i:i,u:R(),v:R()*.98,t:R(),o:R()+R()+R()+R()-2,band:!big&&R()<.4,g:g,c:PAL[g],x:0,y:0,al:0,
+      r:big?1.3+R()*.9:(R()<.12?.8+R()*.5:.3+R()*.4),a:big?.9:.42+R()*.58,
+      ph:R()*6.283,ph2:R()*6.283,ph3:R()*6.283,f1:4+R()*5,f2:7+R()*8,f3:.6+R()*1.4,
+      amp:big?.5:(R()<.4?.55:.3)})}})();
+
+  /* lớp tĩnh: dải ngân hà, bụi sao và sao mờ. Vẽ một lần mỗi khi đổi kích thước, dùng hạt giống cố định nên luôn giống nhau */
+  function paintBg(){
+    var R=rng(20261121),w=W,h=H,m=Math.min(w,h),i,t,p,n,off,r,x,y,a,g,c;
+    bctx.setTransform(DPR,0,0,DPR,0,0);bctx.clearRect(0,0,w,h);
+    var P0={x:-.12*w,y:1.02*h},P1={x:.42*w,y:.30*h},P2={x:1.12*w,y:.22*h};
+    function bz(t){var u=1-t;return{x:u*u*P0.x+2*u*t*P1.x+t*t*P2.x,y:u*u*P0.y+2*u*t*P1.y+t*t*P2.y}}
+    function nm(t){var u=1-t,dx=2*u*(P1.x-P0.x)+2*t*(P2.x-P1.x),dy=2*u*(P1.y-P0.y)+2*t*(P2.y-P1.y),l=Math.sqrt(dx*dx+dy*dy)||1;return{x:-dy/l,y:dx/l}}
+    var bw=m*.15;
+    function dot(x,y,r,a,k){
+      bctx.fillStyle='rgba('+k[0]+','+k[1]+','+k[2]+','+a+')';
+      if(r<.7)bctx.fillRect(x-r,y-r,r*2,r*2);else{bctx.beginPath();bctx.arc(x,y,r,0,6.2832);bctx.fill()}
+    }
+    /* quầng sáng của dải ngân hà */
+    bctx.globalCompositeOperation='lighter';
+    for(i=0;i<95;i++){
+      t=R();p=bz(t);n=nm(t);off=(R()+R()+R()-1.5)*bw*1.1;r=bw*(.7+R()*1.1);
+      x=p.x+n.x*off;y=p.y+n.y*off;
+      a=(.04+R()*.04)*(1-Math.min(1,Math.abs(off)/(bw*1.6))*.5)*(.5+.5*Math.sin(t*Math.PI));
+      c=R()<.28?'255,214,190':(R()<.5?'150,165,255':'190,150,255');
+      g=bctx.createRadialGradient(x,y,0,x,y,r);
+      g.addColorStop(0,'rgba('+c+','+a+')');g.addColorStop(1,'rgba('+c+',0)');
+      bctx.fillStyle=g;bctx.fillRect(x-r,y-r,r*2,r*2);
+    }
+    /* vệt bụi tối cắt ngang dải sáng */
+    bctx.globalCompositeOperation='source-over';
+    for(i=0;i<46;i++){
+      t=.08+R()*.84;p=bz(t);n=nm(t);off=(R()-.5)*bw*.9;r=bw*(.16+R()*.3);
+      x=p.x+n.x*off;y=p.y+n.y*off;a=.16+R()*.14;
+      g=bctx.createRadialGradient(x,y,0,x,y,r);
+      g.addColorStop(0,'rgba(2,4,16,'+a+')');g.addColorStop(1,'rgba(2,4,16,0)');
+      bctx.fillStyle=g;bctx.fillRect(x-r,y-r,r*2,r*2);
+    }
+    /* sao dày đặc dọc theo dải ngân hà */
+    var nb=Math.round(Math.min(1600,w*h/1100));
+    for(i=0;i<nb;i++){
+      t=R();p=bz(t);n=nm(t);off=(R()+R()+R()+R()-2)*bw*.9;
+      a=(.12+R()*.5)*(1-Math.min(1,Math.abs(off)/(bw*1.4))*.6);
+      dot(p.x+n.x*off,p.y+n.y*off,.25+R()*.45,a,R()<.7?PAL[1+Math.floor(R()*2)]:PAL[Math.floor(R()*PAL.length)]);
+    }
+    /* sao mờ rải khắp bầu trời (đứng yên, nền cho các sao nhấp nháy) */
+    var nf=Math.max(80,Math.min(320,Math.round(w*h/5500)));
+    for(i=0;i<nf;i++){
+      dot(R()*w,R()*h,.3+Math.pow(R(),3)*.8,.15+R()*.4,PAL[Math.floor(R()*PAL.length)]);
+    }
+    /* đặt các sao nhấp nháy: một phần nằm dọc dải ngân hà, phần còn lại rải đều */
+    nT=Math.max(190,Math.min(TW.length,Math.round(w*h/1600)));
+    nBig=Math.max(4,Math.min(14,Math.round(w*h/90000)));
+    TWG=[[],[],[],[],[]];
+    for(i=0;i<nT;i++){
+      var st=TW[i];
+      if(st.band){p=bz(st.t);n=nm(st.t);st.x=p.x+n.x*st.o*bw*.9;st.y=p.y+n.y*st.o*bw*.9}
+      else{st.x=st.u*w;st.y=st.v*h}
+      st.al=0;
+      if(st.x>-2&&st.x<w+2&&st.y>-2&&st.y<h+2)TWG[st.g].push(st);
+    }
   }
+  function drawSky(t){
+    sctx.clearRect(0,0,W,H);
+    var ts=t/1000,g,i,st,al,n,r,list,c;
+    for(g=0;g<5;g++){
+      list=TWG[g];sctx.fillStyle=PALCSS[g];
+      for(i=0;i<list.length;i++){
+        st=list[i];
+        if(lite&&(st.i&1)&&st.r<1.2){st.al=0;continue}  /* máy yếu: bỏ một nửa số sao nhỏ */
+        r=st.r;n=0;
+        if(reduce)al=st.a*.85;
+        else{
+          n=.5*Math.sin(ts*st.f1+st.ph)+.3*Math.sin(ts*st.f2+st.ph2)+.2*Math.sin(ts*st.f3+st.ph3);
+          al=st.a*(.6+.8*st.amp*n);
+          if(r>.75)r*=.92+.12*n;
+        }
+        if(al>1)al=1;
+        st.al=al;
+        if(al<.03)continue;
+        sctx.globalAlpha=al;
+        if(r<.75)sctx.fillRect(st.x-r,st.y-r,r*2,r*2);
+        else{sctx.beginPath();sctx.arc(st.x,st.y,r,0,6.283);sctx.fill()}
+      }
+    }
+    sctx.globalAlpha=1;
+    /* sao sáng nhất có quầng và tia lấp lánh, tia chớp theo độ sáng hiện tại */
+    for(i=0;i<nBig&&i<nT;i++){
+      st=TW[i];al=st.al;if(al<.05)continue;c=st.c;r=st.r;
+      sctx.fillStyle='rgba('+c[0]+','+c[1]+','+c[2]+','+al*.13+')';
+      sctx.beginPath();sctx.arc(st.x,st.y,r*4.5,0,6.283);sctx.fill();
+      var L=r*(4+5*al);sctx.strokeStyle='rgba('+c[0]+','+c[1]+','+c[2]+','+al*.32+')';sctx.lineWidth=.7;
+      sctx.beginPath();sctx.moveTo(st.x-L,st.y);sctx.lineTo(st.x+L,st.y);sctx.moveTo(st.x,st.y-L);sctx.lineTo(st.x,st.y+L);sctx.stroke();
+    }
+    if(reduce)return;
+    if(!shoot&&t>nextShoot){shoot={x:W*(.25+Math.random()*.7),y:H*Math.random()*.35,vx:-(9+Math.random()*6),vy:4+Math.random()*3,l:0};nextShoot=t+7000+Math.random()*9000}
+    if(shoot){
+      shoot.l++;shoot.x+=shoot.vx*2;shoot.y+=shoot.vy*2;
+      var f=1-shoot.l/26;
+      if(f<=0)shoot=null;else{
+        var tx=shoot.x-shoot.vx*7,ty=shoot.y-shoot.vy*7,g=sctx.createLinearGradient(shoot.x,shoot.y,tx,ty);
+        g.addColorStop(0,'rgba(255,255,255,'+(.9*f)+')');g.addColorStop(1,'rgba(180,200,255,0)');
+        sctx.strokeStyle=g;sctx.lineWidth=1.6;sctx.beginPath();sctx.moveTo(shoot.x,shoot.y);sctx.lineTo(tx,ty);sctx.stroke();
+      }
+    }
+  }
+
+  /* ===== kích thước màn hình ===== */
+  function calcDPR(w,h){
+    var d=Math.min(window.devicePixelRatio||1,touch?1.5:2),cap=touch?3.2e6:6e6;
+    if(w*h*d*d>cap)d=Math.max(1,Math.sqrt(cap/(w*h)));
+    return d;
+  }
+  function resize(){
+    var r=cv.getBoundingClientRect(),w=r.width||innerWidth,h=r.height||innerHeight;
+    if(w<1||h<1)return;
+    var d=calcDPR(w,h);
+    if(w===W&&h===H&&d===DPR)return;
+    var sx=oldW?w/oldW:1,sy=oldH?h/oldH:1,i,o;
+    W=w;H=h;DPR=d;oldW=w;oldH=h;
+    if(sx!==1||sy!==1){
+      for(i=0;i<flies.length;i++){o=flies[i];o.x*=sx;o.y*=sy}
+      for(i=0;i<trl.length;i++){trl[i].x*=sx;trl[i].y*=sy}
+      ptr.x*=sx;ptr.y*=sy;lx=ptr.x;ly=ptr.y;
+      if(fw){fw.x*=sx;fw.y*=sy;fw.rx*=sx;fw.ry*=sy}
+      if(fl){fl.x*=sx;fl.y*=sy}
+      if(rp){rp.x*=sx;rp.y*=sy}
+      shoot=null;
+    }
+    var pw2=Math.round(W*DPR),ph2=Math.round(H*DPR);
+    cv.width=bgc.width=sk.width=pw2;cv.height=bgc.height=sk.height=ph2;
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='medium';
+    sctx.setTransform(DPR,0,0,DPR,0,0);
+    /* phone: tia hố đen bắn dọc. tablet: bắn theo chiều dài màn hình. PC: bắn ngang */
+    JV=touch&&(Math.min(W,H)<600||H>W);
+    JSPAN=Math.min((JV?H:W)*.5,1100);
+    paintBg();drawSky(skyT);setHint();
+  }
+  function onResize(){clearTimeout(rsT);rsT=setTimeout(resize,80)}
+
   function spawn(x,y,n,spread){
     for(var i=0;i<n;i++){
       var a=Math.random()*6.283,d=Math.random()*spread;
@@ -208,12 +389,20 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
     }
     if(flies.length>MAX)flies.splice(0,flies.length-MAX);
   }
-  function reset(){flies=[];spawn(W/2,H/2,touch?100:140,Math.min(W,H)*.35)}
+  function reset(){
+    flies=[];fw=null;fl=null;rp=null;trl=[];hb=0;
+    spawn(W/2,H/2,DEF,Math.min(W,H)*.35);
+  }
+  function addFlies(){var n=Math.min(STEP,MAX-flies.length);if(n>0)spawn(W/2,H/2,n,Math.min(W,H)*.3)}
+  function dropFlies(){var n=Math.min(STEP,flies.length-MIN);if(n>0)flies.splice(0,n)}
 
   function step(t){
-    var dt=Math.min((t-last)/16.667||1,3);last=t;
-    ctx.globalCompositeOperation='source-over';
-    ctx.fillStyle=reduce?'rgba(16,26,58,1)':'rgba(16,26,58,'+Math.min(1,(.25-pw*(mode==='swirl'||mode==='hole'?.08:mode==='trail'?.15:0)-(mode==='fire'?.1:0))*dt)+')';
+    var raw=t-last,dt=Math.min(raw/16.667||1,3);last=t;
+    /* máy yếu: khi khung hình chậm và đàn đông thì bỏ lớp lõi sáng và giảm bớt số sao nhấp nháy */
+    fa+=(Math.min(raw,100)-fa)*.04;
+    if(!lite){if(fa>24&&flies.length>400)lite=true}else if(flies.length<=300)lite=false;
+    ctx.globalCompositeOperation='destination-out';
+    ctx.fillStyle=reduce?'rgba(0,0,0,1)':'rgba(0,0,0,'+Math.min(1,(.25-pw*(mode==='swirl'||mode==='hole'?.08:mode==='trail'?.15:0)-(mode==='fire'?.1:0))*dt)+')';
     ctx.fillRect(0,0,W,H);
     ctx.globalCompositeOperation='lighter';
     pr+=((ptr.down?1:0)-pr)*Math.min(1,(ptr.down?.04:.025)*dt);pw=pr*pr*(3-2*pr);var s=t/1000,k=2*pw,dmp=Math.pow(.965,dt);
@@ -225,12 +414,18 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
       if(cspd>40){cvx*=40/cspd;cvy*=40/cspd;cspd=40}
     }else{cvx=cvy=0}
     lx=ptr.x;ly=ptr.y;exc=Math.min(cspd*.012,.35);
-    var sw=mode==='swirl'?pw:0,crisp=flies.length<=2000,DK=Math.max(220,Math.min(W,H)*.46),M=s*2.4,SS=Math.min(W*.42,H*.4),GR=60,gw=Math.ceil(W/GR)+1,gh=Math.ceil(H/GR)+1,j,gi;
+    var sw=mode==='swirl'?pw:0,DK=Math.max(220,Math.min(W,H)*.46),M=s*2.4,SS=Math.min(W*.42,H*.4),GR=60,gw=Math.ceil(W/GR)+1,gh=Math.ceil(H/GR)+1,j,gi;
     var HR=Math.max(16,Math.min(W,H)*.032);hb*=Math.pow(.95,dt);
     if(fw){
-      fw.t+=dt;var u=Math.min(1,fw.t/55),e=1-Math.pow(1-u,2.4);
-      fw.rx=fw.x+Math.sin(fw.t*.3)*4*(1-u);fw.ry=(H+30)+(fw.y-H-30)*e;
-      if(fw.t>=62){fl={x:fw.rx,y:fw.ry,t:0,c:explode(fw.rx,fw.ry)};fw=null}
+      /* đợi đàn tập hợp: tên lửa chỉ bay lên và nổ khi phần lớn đom đóm đã dồn về đuôi nó */
+      fw.t+=dt;
+      var nc=0,gx0=fw.rx,gy0=fw.ry+25;
+      for(j=0;j<flies.length;j++){var gdx=flies[j].x-gx0,gdy=flies[j].y-gy0;if(gdx*gdx+gdy*gdy<12100)nc++}
+      var frac=flies.length?nc/flies.length:1;
+      fw.p+=dt*Math.min(1,Math.max(0,(frac-.3)/.55));
+      var u=Math.min(1,fw.p/55),e=1-Math.pow(1-u,2.4);
+      fw.rx=fw.x+Math.sin(fw.t*.3)*4*(1-u);fw.ry=(H-10)+(fw.y-H+10)*e;
+      if(fw.p>=62&&(frac>=.9||fw.t>420)){fl={x:fw.rx,y:fw.ry,t:0,c:explode()};fw=null}
     }
     if(mode==='trail'&&ptr.down){trl.push({x:ptr.x,y:ptr.y});if(trl.length>90)trl.shift()}
     if(mode==='flock'){
@@ -247,7 +442,7 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
       if(fw){
         var gt=Math.min(1,fw.t/12),sx=3+f.h*10,
             gx=fw.rx+Math.cos(f.ph+fw.t*.2)*sx,gy=fw.ry+4+f.h*40+Math.sin(f.ph*1.3+fw.t*.25)*sx,
-            ax=Math.max(-2.5,Math.min(2.5,(gx-f.x)*.1)),ay=Math.max(-2.5,Math.min(2.5,(gy-f.y)*.1));
+            ax=Math.max(-3.5,Math.min(3.5,(gx-f.x)*.1)),ay=Math.max(-3.5,Math.min(3.5,(gy-f.y)*.1));
         f.vx+=(ax-f.vx*.2)*gt*dt;f.vy+=(ay-f.vy*.2)*gt*dt;
       }
       if(f.fb>.01){f.vy+=.1*f.fb*dt;f.fb*=Math.pow(.992,dt)}
@@ -255,7 +450,8 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
         var cx0=Math.floor(f.x/GR),cy0=Math.floor(f.y/GR),nn=0,avx=0,avy=0,cpx=0,cpy=0,spx=0,spy=0;
         for(var oy2=-1;oy2<=1;oy2++){var yy=cy0+oy2;if(yy<0||yy>=gh)continue;
           for(var ox2=-1;ox2<=1;ox2++){var xx=cx0+ox2;if(xx<0||xx>=gw)continue;
-            for(j=head[yy*gw+xx];j>=0;j=nxt[j]){
+            /* giới hạn số hàng xóm xét mỗi con để đàn đông không làm máy chậm */
+            for(j=head[yy*gw+xx];j>=0&&nn<40;j=nxt[j]){
               if(j===i)continue;
               var o=flies[j],ddx=o.x-f.x,ddy=o.y-f.y,dd=ddx*ddx+ddy*ddy;
               if(dd<3600){nn++;avx+=o.vx;avy+=o.vy;cpx+=ddx;cpy+=ddy;
@@ -292,14 +488,19 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
             f.gl=Math.max(f.gl,.55);
             if(d<220)f.hs=0;
           }else{
-            var vt=Math.min(16,95/Math.sqrt(d+10)),vi=.5+30/(d+12)+vt*vt*.33/d,st=Math.min(1,.07*pw*dt/f.m);
-            f.vx+=((nx*vi-ny*vt)-f.vx)*st;f.vy+=((ny*vi+nx*vt)-f.vy)*st;
+            var vt=Math.min(16,95/Math.sqrt(d+10)),vi=3+80/(d+20),
+                vtn=-f.vx*ny+f.vy*nx,vrn=f.vx*nx+f.vy*ny,gd=pw*dt/f.m,
+                ard=Math.min(8,vtn*vtn/Math.max(d,20)+(vi-vrn)*.08),atd=(vt-vtn)*.07;
+            f.vx+=(nx*ard-ny*atd)*gd;f.vy+=(ny*ard+nx*atd)*gd;
             if(d<90)f.gl=Math.max(f.gl,.5*(1-d/90));
           }
-          if(f.hs!==1&&d<Rh+3&&pw>.3){
-            var sg=Math.random()<.5?-1:1,ang=(Math.random()-.5)*.9,hjv=32+Math.random()*14,js=H*.5/hjv*(.8+Math.random()*.4);
-            f.x=ptr.x+Math.sin(ang)*Rh*.5;f.y=ptr.y+sg*(Rh+2);
-            f.vx=Math.sin(ang)*js;f.vy=sg*Math.cos(ang)*js;f.hs=1;f.hj=hjv;f.gl=1;hb=Math.min(1,hb+.03)}}
+          if(f.hs!==1&&d<Math.max(30,HR*1.5)&&pw>.3){
+            /* bị nuốt vào rồi bắn ra thành hai tia: PC bắn trái và phải, điện thoại bắn lên và xuống */
+            var sg=Math.random()<.5?-1:1,ang=(Math.random()-.5)*.9,hjv=32+Math.random()*14,js=JSPAN/hjv*(.8+Math.random()*.4),
+                sa=Math.sin(ang),ca=Math.cos(ang);
+            if(JV){f.x=ptr.x+sa*Rh*.5;f.y=ptr.y+sg*(Rh+2);f.vx=sa*js;f.vy=sg*ca*js}
+            else{f.x=ptr.x+sg*(Rh+2);f.y=ptr.y+sa*Rh*.5;f.vx=sg*ca*js;f.vy=sa*js}
+            f.hs=1;f.hj=hjv;f.gl=1;hb=Math.min(1,hb+.03)}}
         else if(mode==='trail'){
           var T=trl.length;
           if(T){var tp=trl[T-1-Math.min(T-1,Math.floor(f.h*(T-1)))],fz=4+f.h*16,gk=pw*dt;
@@ -321,11 +522,10 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
       if(f.y<m){f.y=m;f.vy=Math.abs(f.vy)*.9;f.w=-f.w}else if(f.y>H-m){f.y=H-m;f.vy=-Math.abs(f.vy)*.9;f.w=-f.w}
       var spd=Math.sqrt(f.vx*f.vx+f.vy*f.vy),a=Math.min(1,(.35+.65*Math.max(0,Math.sin(f.th)))*1.3+sw*Math.min(spd*.015,.2)+f.gl*.6);
       ctx.globalAlpha=a;
-      var z=Math.max(f.sz*1.1,5),el=1+Math.min(spd*.1,.9),cs=spd>.05?f.vx/spd:1,sn=spd>.05?f.vy/spd:0;
-      var px=f.x,py=f.y;
-      ctx.setTransform(cs*DPR,sn*DPR,-sn*DPR,cs*DPR,px*DPR,py*DPR);
+      var z=Math.max(f.sz*1.1,5),el=1+Math.min(spd*(mode==='hole'&&f.hs?.14:.1),mode==='hole'&&f.hs?2.4:.9),cs=spd>.05?f.vx/spd:1,sn=spd>.05?f.vy/spd:0;
+      ctx.setTransform(cs*DPR,sn*DPR,-sn*DPR,cs*DPR,f.x*DPR,f.y*DPR);
       ctx.drawImage(sprites[f.c],-z*el,-z,z*2*el,z*2);
-      if(crisp){var cr=Math.max(1.4,f.sz*.1);ctx.drawImage(core,-cr,-cr,cr*2,cr*2)}
+      if(!lite){var cr=Math.max(1.4,f.sz*.1);ctx.drawImage(core,-cr,-cr,cr*2,cr*2)}
     }
     ctx.globalAlpha=1;ctx.setTransform(DPR,0,0,DPR,0,0);
     var cc=COLORS[color===6?0:color],cs2=cc[0]+','+cc[1]+','+cc[2];
@@ -344,49 +544,85 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
       gr.addColorStop(1,'rgba('+cs2+',0)');
       ctx.fillStyle=gr;ctx.fillRect(hx-hr*4.2,hy-hr*4.2,hr*8.4,hr*8.4);
       ctx.globalCompositeOperation='source-over';
-      ctx.fillStyle='#03060f';ctx.beginPath();ctx.arc(hx,hy,hr*.98,0,6.283);ctx.fill();
+      ctx.fillStyle='#02040c';ctx.beginPath();ctx.arc(hx,hy,hr*.98,0,6.283);ctx.fill();
     }
-    if(shown!==flies.length){shown=flies.length;countEl.textContent=shown+' con'}
+    if(shown!==flies.length)syncCount();
+    if(!reduce&&t-skyT>33){skyT=t;drawSky(t)}
     requestAnimationFrame(step);
   }
+  function syncCount(){
+    var n=flies.length;shown=n;countEl.textContent=n+' con';
+    lessB.setAttribute('aria-disabled',String(n<=MIN));moreB.setAttribute('aria-disabled',String(n>=MAX));
+  }
 
+  /* ===== con trỏ: chỉ theo một ngón/chuột đầu tiên, bỏ qua ngón thứ hai ===== */
   function pos(e){var r=cv.getBoundingClientRect();ptr.x=e.clientX-r.left;ptr.y=e.clientY-r.top}
-  cv.addEventListener('pointermove',function(e){pos(e)});
+  cv.addEventListener('pointermove',function(e){if(pid===-1||e.pointerId===pid)pos(e)});
   cv.addEventListener('pointerdown',function(e){
-    pos(e);ptr.active=true;ptr.down=true;lx=ptr.x;ly=ptr.y;cvx=cvy=0;ptr.t0=performance.now();trl=[];if(mode==='fire'){if(!fw)fw={x:ptr.x,y:ptr.y,t:0,rx:ptr.x,ry:H+30}}else rp={x:ptr.x,y:ptr.y,t:0};
+    if(pid!==-1&&!e.isPrimary)return;
+    if(e.pointerType==='mouse'&&e.button!==0)return;
+    pid=e.pointerId;
+    pos(e);ptr.active=true;ptr.down=true;lx=ptr.x;ly=ptr.y;cvx=cvy=0;ptr.t0=performance.now();trl=[];
+    if(mode==='fire'){if(!fw)fw={x:ptr.x,y:ptr.y,t:0,p:0,rx:ptr.x,ry:H-10}}else rp={x:ptr.x,y:ptr.y,t:0};
     try{cv.setPointerCapture(e.pointerId)}catch(_){}
   });
-  function up(){ptr.down=false;ptr.active=false}
+  function up(e){if(e&&e.pointerId!==pid)return;pid=-1;ptr.down=false;ptr.active=false}
   cv.addEventListener('pointerup',up);
   cv.addEventListener('pointercancel',up);
-  
+  cv.addEventListener('lostpointercapture',up);
+  addEventListener('blur',function(){up()});
   cv.addEventListener('contextmenu',function(e){e.preventDefault()});
 
-  document.getElementById('modes').addEventListener('click',function(e){
-    var b=e.target.closest('button');if(!b)return;var nm=b.dataset.m;
-    if(nm==='shape'){if(mode==='shape')shapeIdx=(shapeIdx+1)%SHAPES.length;spts=buildShape(shapeIdx);b.textContent='Hình: '+SHAPES[shapeIdx]}
-    mode=nm;setHint();
-    [].forEach.call(this.children,function(x){x.setAttribute('aria-pressed',x===b)});
+  /* ===== bảng điều khiển ===== */
+  var mlist=document.getElementById('modes'),mbtn=document.getElementById('modebtn');
+  function setList(o){mlist.hidden=!o;mbtn.setAttribute('aria-expanded',String(o))}
+  mlist.addEventListener('click',function(e){
+    var b=e.target.closest('button');if(!b)return;var nm=b.dataset.m,wasShape=mode==='shape';
+    if(nm==='shape'){if(wasShape)shapeIdx=(shapeIdx+1)%SHAPES.length;spts=buildShape(shapeIdx);b.textContent='Hình: '+SHAPES[shapeIdx]}
+    if(nm!==mode){
+      /* dọn trạng thái của chế độ cũ: tên lửa pháo hoa, vệt vẽ, trạng thái hố đen */
+      fw=null;trl=[];
+      for(var i=0;i<flies.length;i++){flies[i].hs=0;flies[i].hj=0}
+    }
+    mode=nm;setHint();document.getElementById('modename').textContent=b.textContent;if(!(nm==='shape'&&wasShape))setList(false);
+    [].forEach.call(this.children,function(x){x.setAttribute('aria-pressed',String(x===b))});
   });
   document.getElementById('dots').addEventListener('click',function(e){
     var b=e.target.closest('button');if(!b)return;color=+b.dataset.c;
-    [].forEach.call(this.children,function(x){x.setAttribute('aria-pressed',x===b)});
+    [].forEach.call(this.children,function(x){x.setAttribute('aria-pressed',String(x===b))});
     for(var i=0;i<flies.length;i++){flies[i].c=pick()}
   });
-  document.getElementById('less').onclick=function(){flies.splice(0,Math.max(0,Math.min(50,flies.length-MIN)))};
-  document.getElementById('more').onclick=function(){spawn(W/2,H/2,50,Math.min(W,H)*.3)};
+  /* bấm một lần = ±50, giữ nút = lặp nhanh. Bàn phím kích hoạt qua sự kiện click (detail === 0) */
+  function hold(btn,fn){
+    var t1=0,t2=0;
+    function stop(){clearTimeout(t1);clearInterval(t2);t1=t2=0}
+    btn.addEventListener('pointerdown',function(e){
+      if(e.pointerType==='mouse'&&e.button!==0)return;
+      stop();fn();t1=setTimeout(function(){t2=setInterval(fn,60)},400);
+    });
+    ['pointerup','pointercancel','pointerleave'].forEach(function(n){btn.addEventListener(n,stop)});
+    btn.addEventListener('blur',stop);
+    btn.addEventListener('click',function(e){if(e.detail===0)fn()});
+    btn.addEventListener('contextmenu',function(e){e.preventDefault()});
+  }
+  hold(lessB,dropFlies);hold(moreB,addFlies);
   document.getElementById('reset').onclick=reset;
+  mbtn.onclick=function(e){e.stopPropagation();setList(mlist.hidden)};
+  document.addEventListener('pointerdown',function(e){if(!mlist.hidden&&!e.target.closest('.modewrap'))setList(false)});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!mlist.hidden){setList(false);mbtn.focus()}});
   var bar=document.getElementById('bar'),tg=document.getElementById('toggle');
   tg.onclick=function(){
     var hide=!bar.classList.contains('hide');
+    if(hide)setList(false);
     bar.classList.toggle('hide',hide);
     tg.textContent=hide?'Hiện bảng':'Ẩn bảng';
     tg.setAttribute('aria-expanded',String(!hide));
   };
-  addEventListener('resize',resize);
-  addEventListener('orientationchange',function(){setTimeout(resize,200)});
+  addEventListener('resize',onResize);
+  addEventListener('orientationchange',function(){onResize();setTimeout(resize,300)});
+  if(window.visualViewport)visualViewport.addEventListener('resize',onResize);
 
-  setHint();resize();reset();requestAnimationFrame(step);
+  resize();reset();requestAnimationFrame(step);
 })();
 </script>
 </body>
