@@ -62,6 +62,10 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
 .seg[hidden]{display:none}
 .seg button{flex:0 0 auto;border:0;border-radius:9px;padding:10px 14px;text-align:left;white-space:nowrap;font-size:.85rem}
 .seg button[aria-pressed="true"]{background:var(--ink);color:var(--deep)}
+.seg button.has-need{display:flex;justify-content:space-between;align-items:center;gap:18px}
+.need{font-size:.74em;color:var(--dim)}
+.seg button[aria-pressed="true"] .need{color:#56608f}
+.seg button[aria-disabled="true"]{opacity:.5}
 .dots{display:flex;gap:6px;padding:0 2px}
 .dot{width:18px;height:18px;border-radius:50%;padding:0;border:2px solid transparent}
 .dot[aria-pressed="true"]{border-color:var(--ink)}
@@ -116,13 +120,14 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
   <div class="seg" id="modes" role="group" aria-label="Chế độ" hidden>
     <button type="button" data-m="follow" aria-pressed="true">Bay theo</button>
     <button type="button" data-m="swirl" aria-pressed="false">Xoáy</button>
-    <button type="button" data-m="flee" aria-pressed="false">Tản ra</button>
     <button type="button" data-m="hole" aria-pressed="false">Hố đen</button>
-    <button type="button" data-m="trail" aria-pressed="false">Vẽ sáng</button>
-    <button type="button" data-m="sync" aria-pressed="false">Nhấp nháy</button>
+    <button type="button" class="has-need" data-m="blast" aria-pressed="false" aria-disabled="true"><span class="lbl">Vụ nổ</span><small class="need" id="need">từ 600 chú</small></button>
+    <button type="button" data-m="fire" aria-pressed="false">Pháo hoa</button>
     <button type="button" data-m="shape" aria-pressed="false">Tạo hình</button>
     <button type="button" data-m="flock" aria-pressed="false">Bầy</button>
-    <button type="button" data-m="fire" aria-pressed="false">Pháo hoa</button>
+    <button type="button" data-m="trail" aria-pressed="false">Vẽ sáng</button>
+    <button type="button" data-m="sync" aria-pressed="false">Nhấp nháy</button>
+    <button type="button" data-m="flee" aria-pressed="false">Tản ra</button>
   </div></div>
   <div class="dots" id="dots">
     <button type="button" class="dot" data-c="0" style="background:#ffc857" aria-label="Màu hổ phách" aria-pressed="true"></button>
@@ -157,12 +162,24 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
   var trl=[],head=new Int32Array(0),nxt=new Int32Array(0),shapeIdx=0,spts=null,shapeCache=[],fontOK=false;
   var SHAPES=['Trái tim','Vòng tròn','Ngôi sao','Chữ'];
   var countEl=document.getElementById('count'),lessB=document.getElementById('less'),moreB=document.getElementById('more'),shown=-1;
+  /* chế độ Vụ nổ: bst=1 khi đang nén, bq=độ nén 0..1, (bx,by)=tâm quả cầu, fxs=hiệu ứng nổ đang chạy.
+     Chỉ dùng được khi đủ NEED chú: 600 trên PC và tablet, 200 trên điện thoại */
+  var bst=0,bq=0,bgate=0,bx=0,by=0,bgt=0,fxs=[],phone=false,NEED=600,needT=0,
+      blastB=document.querySelector('[data-m=blast]'),needEl=document.getElementById('need');
   function pick(){return color===6?Math.floor(Math.random()*COLORS.length):color}
 
-  var mac=/Mac|iPhone|iPad/i.test(navigator.platform||navigator.userAgent||'');
-  document.getElementById('tip').textContent=touch
-    ?'Gợi ý: thả khoảng 1000 chú đom đóm để cả bầu trời cùng sáng lên.'
-    :'Gợi ý: nhấn '+(mac?'Control + Command + F':'F11')+' để vào toàn màn hình, rồi thả khoảng 1000 chú đom đóm để cả bầu trời cùng sáng lên.';
+  /* gợi ý số đom đóm: điện thoại 200 chú, PC và tablet 600 chú */
+  var mac=/Mac|iPhone|iPad/i.test(navigator.platform||navigator.userAgent||''),tipEl=document.getElementById('tip');
+  function setTip(){
+    tipEl.textContent=touch
+      ?'Gợi ý: thả khoảng '+NEED+' chú đom đóm để cả bầu trời cùng sáng lên.'
+      :'Gợi ý: nhấn '+(mac?'Control + Command + F':'F11')+' để vào toàn màn hình, rồi thả khoảng '+NEED+' chú đom đóm để cả bầu trời cùng sáng lên.';
+  }
+  function lockBlast(){blastB.setAttribute('aria-disabled',String(flies.length<NEED))}
+  function needMsg(){
+    tipEl.textContent='Vụ nổ cần từ '+NEED+' chú đom đóm. Hiện có '+flies.length+' chú, bấm +50 để thả thêm.';
+    clearTimeout(needT);needT=setTimeout(setTip,4500);
+  }
 
   /* chữ "Đom đóm" chỉ được lấy mẫu sau khi font tải xong, nếu không đàn sẽ xếp theo font dự phòng */
   if(document.fonts&&document.fonts.load){
@@ -195,12 +212,14 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
     var T={follow:V+' để đàn đom đóm bay theo con trỏ. Nhả ra thì chúng bay tự do.',
       swirl:V+' để đàn xoáy quanh con trỏ như đĩa sao quanh hố đen. Kéo nhanh để quăng đàn ra.',
       flee:V+' để đẩy đàn ra xa con trỏ.',
-      hole:V+' để hút đàn vào hố đen. Chúng bị phóng ra thành hai tia sáng '+jets+'.',
+      hole:V+' để hút đàn vào hố đen. Chúng quay vài vòng, thu hẹp dần rồi bị nuốt và phóng ra thành hai tia sáng '+jets+'.',
       trail:V+' rồi di chuyển để vẽ bằng ánh sáng.',
       sync:V+' để nhịp nhấp nháy lan ra như sóng và cả đàn sáng cùng nhịp.',
       shape:V+' để đàn xếp thành hình. Bấm lại nút này để đổi hình.',
       flock:V+' để dẫn đầu bầy. Đàn tự bay theo bầy như chim sáo.',
-      fire:C+' để bắn pháo hoa.'};
+      fire:C+' để bắn pháo hoa.',
+      blast:flies.length<NEED?'Vụ nổ cần từ '+NEED+' chú đom đóm. Hiện có '+flies.length+' chú, bấm +50 để thả thêm.'
+        :V+' để gom đàn thành quả cầu sáng, giữ càng lâu càng nén chặt. Nhả ra để cả đàn nổ tung.'};
     document.getElementById('hint').textContent=T[mode];
   }
   function explode(){
@@ -365,6 +384,7 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
       if(fw){fw.x*=sx;fw.y*=sy;fw.rx*=sx;fw.ry*=sy}
       if(fl){fl.x*=sx;fl.y*=sy}
       if(rp){rp.x*=sx;rp.y*=sy}
+      bx*=sx;by*=sy;for(i=0;i<fxs.length;i++){fxs[i].x*=sx;fxs[i].y*=sy}
       shoot=null;
     }
     var pw2=Math.round(W*DPR),ph2=Math.round(H*DPR);
@@ -373,9 +393,10 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
     ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='medium';
     sctx.setTransform(DPR,0,0,DPR,0,0);
     /* phone: tia hố đen bắn dọc. tablet: bắn theo chiều dài màn hình. PC: bắn ngang */
-    JV=touch&&(Math.min(W,H)<600||H>W);
+    phone=touch&&Math.min(W,H)<600;NEED=phone?200:600;needEl.textContent='từ '+NEED+' chú';lockBlast();
+    JV=touch&&(phone||H>W);
     JSPAN=Math.min((JV?H:W)*.5,1100);
-    paintBg();drawSky(skyT);setHint();
+    paintBg();drawSky(skyT);setHint();setTip();
   }
   function onResize(){clearTimeout(rsT);rsT=setTimeout(resize,80)}
 
@@ -385,13 +406,33 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
       flies.push({x:x+Math.cos(a)*d,y:y+Math.sin(a)*d,
         vx:Math.cos(a)*(1+Math.random()*2),vy:Math.sin(a)*(1+Math.random()*2),
         ph:Math.random()*6.283,sp:.8+Math.random()*1.6,sz:4+Math.pow(Math.random(),1.6)*20,
-        c:pick(),w:Math.random()*6.283,tv:0,m:.85+Math.random()*.35,rj:.82+Math.random()*.43,h:Math.pow(Math.random(),1.25),u:Math.random(),th:Math.random()*6.283,gl:0,fb:0,jt:0,hs:0,hj:0});
+        c:pick(),w:Math.random()*6.283,tv:0,m:.85+Math.random()*.35,rj:.82+Math.random()*.43,h:Math.pow(Math.random(),1.25),u:Math.random(),th:Math.random()*6.283,gl:0,fb:0,jt:0,hs:0,hj:0,hg:0,bk:0,or:0,lam:0,nt:3.8+Math.random()*1.8});
     }
     if(flies.length>MAX)flies.splice(0,flies.length-MAX);
   }
   function reset(){
-    flies=[];fw=null;fl=null;rp=null;trl=[];hb=0;
+    flies=[];fw=null;fl=null;rp=null;trl=[];hb=0;bst=0;bq=0;fxs=[];bgt=0;
     spawn(W/2,H/2,DEF,Math.min(W,H)*.35);
+  }
+  /* nhả tay: cả đàn nổ bung theo ba lớp vỏ (nhanh, vừa, chậm) với cánh hoa và chút xoáy, kèm tia chớp và sóng xung kích */
+  function detonate(){
+    if(bst!==1)return;
+    bst=0;
+    if(flies.length<NEED){bq=0;return}
+    var ec=bq*bq*(3-2*bq),pwr=.25+.75*ec,mx=Math.min(W,H),
+        pet=5+Math.floor(Math.random()*4),rot=Math.random()*6.283,spin=Math.random()<.5?-1:1,i,f,dx,dy,d,a,v,l,near;
+    for(i=0;i<flies.length;i++){
+      f=flies[i];dx=f.x-bx;dy=f.y-by;d=Math.sqrt(dx*dx+dy*dy);
+      a=d>3?Math.atan2(dy,dx):Math.random()*6.283;a+=(Math.random()-.5)*.3;
+      l=f.u<.2?1:(f.u<.55?.68:.42);
+      near=.5+.5/(1+d/(mx*.3));
+      v=mx*(.014+.021*pwr)*l*(1+.2*Math.cos(pet*(a-rot)))*(.88+Math.random()*.24)*near;
+      f.vx=Math.cos(a)*v-Math.sin(a)*v*.16*spin;
+      f.vy=Math.sin(a)*v+Math.cos(a)*v*.16*spin;
+      f.gl=1;f.bk=Math.random()<.4?30+Math.random()*90:0;
+    }
+    fxs.push({x:bx,y:by,t:0,R:mx*(.32+.48*pwr),c:color===6?Math.floor(Math.random()*COLORS.length):color});
+    bgt=1;bq=0;
   }
   function addFlies(){var n=Math.min(STEP,MAX-flies.length);if(n>0)spawn(W/2,H/2,n,Math.min(W,H)*.3)}
   function dropFlies(){var n=Math.min(STEP,flies.length-MIN);if(n>0)flies.splice(0,n)}
@@ -399,10 +440,10 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
   function step(t){
     var raw=t-last,dt=Math.min(raw/16.667||1,3);last=t;
     /* máy yếu: khi khung hình chậm và đàn đông thì bỏ lớp lõi sáng và giảm bớt số sao nhấp nháy */
-    fa+=(Math.min(raw,100)-fa)*.04;
+    fa+=(Math.min(raw,100)-fa)*.04;bgt*=Math.pow(.975,dt);
     if(!lite){if(fa>24&&flies.length>400)lite=true}else if(flies.length<=300)lite=false;
     ctx.globalCompositeOperation='destination-out';
-    ctx.fillStyle=reduce?'rgba(0,0,0,1)':'rgba(0,0,0,'+Math.min(1,(.25-pw*(mode==='swirl'||mode==='hole'?.08:mode==='trail'?.15:0)-(mode==='fire'?.1:0))*dt)+')';
+    ctx.fillStyle=reduce?'rgba(0,0,0,1)':'rgba(0,0,0,'+Math.min(1,(.25-pw*(mode==='swirl'||mode==='hole'?.08:mode==='trail'?.15:0)-(mode==='fire'?.1:0)-(mode==='blast'?Math.max(pw,bgt)*.11:0))*dt)+')';
     ctx.fillRect(0,0,W,H);
     ctx.globalCompositeOperation='lighter';
     pr+=((ptr.down?1:0)-pr)*Math.min(1,(ptr.down?.04:.025)*dt);pw=pr*pr*(3-2*pr);var s=t/1000,k=2*pw,dmp=Math.pow(.965,dt);
@@ -416,6 +457,8 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
     lx=ptr.x;ly=ptr.y;exc=Math.min(cspd*.012,.35);
     var sw=mode==='swirl'?pw:0,DK=Math.max(220,Math.min(W,H)*.46),M=s*2.4,SS=Math.min(W*.42,H*.4),GR=60,gw=Math.ceil(W/GR)+1,gh=Math.ceil(H/GR)+1,j,gi;
     var HR=Math.max(16,Math.min(W,H)*.032);hb*=Math.pow(.95,dt);
+    /* hố đen: OD = bán kính đĩa quỹ đạo ngoài cùng, RC = bán kính bị nuốt, ORMIN = quỹ đạo nhỏ nhất khi vào đĩa */
+    var OD=Math.max(110,Math.min(W,H)*.3),RC=Math.max(30,HR*1.5),ORMIN=Math.min(RC*4.2,OD*.8);
     if(fw){
       /* đợi đàn tập hợp: tên lửa chỉ bay lên và nổ khi phần lớn đom đóm đã dồn về đuôi nó */
       fw.t+=dt;
@@ -427,6 +470,16 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
       fw.rx=fw.x+Math.sin(fw.t*.3)*4*(1-u);fw.ry=(H-10)+(fw.y-H+10)*e;
       if(fw.p>=62&&(frac>=.9||fw.t>420)){fl={x:fw.rx,y:fw.ry,t:0,c:explode()};fw=null}
     }
+    /* vụ nổ: đang giữ thì quả cầu nén dần (khoảng 2,5 giây), tâm bám theo con trỏ rất êm */
+    var ec=0,BR=Math.min(W,H)*.36;
+    if(mode==='blast'&&bst===1){
+      if(flies.length<NEED){bst=0;bq=0}
+      else{
+        bq=Math.min(1,bq+dt/150);bgate+=(1-bgate)*Math.min(1,.04*dt);
+        bx=ptr.x;by=ptr.y;
+        ec=bq*bq*(3-2*bq);
+      }
+    }
     if(mode==='trail'&&ptr.down){trl.push({x:ptr.x,y:ptr.y});if(trl.length>90)trl.shift()}
     if(mode==='flock'){
       if(head.length<gw*gh)head=new Int32Array(gw*gh);
@@ -435,10 +488,11 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
       for(j=0;j<flies.length;j++){gi=Math.floor(flies[j].y/GR)*gw+Math.floor(flies[j].x/GR);nxt[j]=head[gi];head[gi]=j}
     }
     for(var i=0;i<flies.length;i++){
-      var f=flies[i];
+      var f=flies[i],bdim=1;
       f.tv=f.tv*.94+(Math.random()-.5)*.05*dt;f.w+=f.tv*dt;
       f.vx+=Math.cos(f.w)*.06*dt/f.m;f.vy+=Math.sin(f.w)*.06*dt/f.m;
       f.th+=f.sp*dt/60;f.gl*=.93;f.jt*=.985;
+      if(f.bk>0){f.bk-=dt;if(f.bk<=0)f.gl=1}  /* tàn lửa lép bép sau vụ nổ */
       if(fw){
         var gt=Math.min(1,fw.t/12),sx=3+f.h*10,
             gx=fw.rx+Math.cos(f.ph+fw.t*.2)*sx,gy=fw.ry+4+f.h*40+Math.sin(f.ph*1.3+fw.t*.25)*sx,
@@ -463,6 +517,14 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
       if(pw>.01){
         var dx=ptr.x-f.x,dy=ptr.y-f.y,d=Math.sqrt(dx*dx+dy*dy)+1,nx=dx/d,ny=dy/d,p=Math.min(260/(d+40),4)*.1*k*dt/f.m;
         if(mode==='follow'){f.vx+=nx*p;f.vy+=ny*p}
+        else if(mode==='blast'){
+          /* đang nén: gom đàn đúng như chế độ bay theo, độ nén chỉ làm quả cầu sáng dần */
+          if(bst===1){
+            f.vx+=nx*p;f.vy+=ny*p;
+            f.gl=Math.max(f.gl,ec*.35*Math.max(0,1-d/140));
+            bdim=1-.8*ec*Math.max(0,1-d/110);  /* chỗ dày đặc thì mờ bớt để lõi không cháy trắng */
+          }
+        }
         else if(mode==='swirl'){
           /* lốc xoáy: dây chun đàn hồi nối với con trỏ + quán tính thật. Con trỏ nhanh thì đàn bị quăng ra rồi bị kéo lại */
           var Rt=(36+(DK-36)*Math.pow(f.h,1.4))*f.rj,
@@ -475,24 +537,40 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
           ar=Math.max(-8,Math.min(8,ar));
           f.vx+=(nx*ar-ny*at)*g;f.vy+=(ny*ar+nx*at)*g}
         else if(mode==='hole'){
-          /* hs=0: trôi trong đĩa và bị hút dần vào; hs=1: bị bắn ra xa; hs=2: bị hút giật ngược về, rồi lại vào đĩa */
+          /* hs=0: bị hút lại gần; hs=3: quay quanh hố đen vài vòng, quỹ đạo co dần; hs=1: bị nuốt rồi bắn ra xa; hs=2: vừa bị bắn ra, hãm lại rồi được hút về như lúc hố đen mới xuất hiện */
           var Rh=HR*pw;
           if(f.hs===1){
-            f.hj-=dt;if(f.hj<=0)f.hs=2;
+            f.hj-=dt;if(f.hj<=0){f.hs=2;f.hg=0}
             f.vx*=dmp>0?1/dmp*.998:1;f.vy*=dmp>0?1/dmp*.998:1;f.gl=Math.max(f.gl,.8);
-          }else if(f.hs===2){
-            var ah=(.9+d*.004)*Math.min(1,Math.max(0,(d-120)/200))*pw*dt/f.m;
-            f.vx+=nx*ah-ny*ah*.35;f.vy+=ny*ah+nx*ah*.35;
-            var sp3=Math.sqrt(f.vx*f.vx+f.vy*f.vy),vm=5+d*.07;
-            if(sp3>vm){var kk=1-Math.min(.35,.3*dt)*(1-vm/sp3);f.vx*=kk;f.vy*=kk}
-            f.gl=Math.max(f.gl,.55);
-            if(d<220)f.hs=0;
+          }else if(f.hs===3){
+            /* quỹ đạo xoắn ốc: bán kính giảm theo góc đã quét (đúng f.nt vòng từ lúc vào đĩa tới lúc bị nuốt), càng vào trong càng quay nhanh */
+            var ovt=-f.vx*ny+f.vy*nx,ovr=f.vx*nx+f.vy*ny,og=pw*dt/f.m;
+            if(d>OD*1.8){f.hs=0}
+            else{
+              f.or*=Math.exp(-f.lam*Math.max(ovt/Math.max(d,12)*dt,.004*dt));
+              if(f.or<RC*1.8)f.or-=3*dt;            /* chặng cuối: lao thẳng xuống */
+              if(f.or<RC*.6)f.or=RC*.6;
+              var ovT=Math.min(26,15.5*Math.sqrt(OD/270)*Math.sqrt(OD*.5/Math.max(d,RC*.8))),
+                  oar=Math.max(-8,Math.min(8,(d-f.or)*.14-.1*ovr))+Math.min(40,ovt*ovt/Math.max(d,12))*.95,  /* lực kéo về quỹ đạo (có giới hạn) + lực hướng tâm giữ vòng tròn */
+                  oat=(ovT-ovt)*.07;
+              f.vx+=(nx*oar-ny*oat)*og;f.vy+=(ny*oar+nx*oat)*og;
+              f.gl=Math.max(f.gl,.25+.4*(1-Math.min(1,d/OD)));
+            }
           }else{
+            /* hs=0 và hs=2 dùng chung một lực hút. Với hs=2 (vừa bị bắn ra): hãm lại rồi lực hút tăng dần từ 0 lên đầy đủ
+               trong khoảng 70 khung hình, giống lúc nhấn giữ khiến hố đen vừa hiện ra và hút đàn từ từ */
+            var hg=1;
+            if(f.hs===2){
+              f.hg=Math.min(1,f.hg+dt/70);hg=f.hg;
+              if(hg<.5){var hbk=Math.pow(.94,dt);f.vx*=hbk;f.vy*=hbk}
+              if(f.hg>=1)f.hs=0;
+            }
             var vt=Math.min(16,95/Math.sqrt(d+10)),vi=3+80/(d+20),
-                vtn=-f.vx*ny+f.vy*nx,vrn=f.vx*nx+f.vy*ny,gd=pw*dt/f.m,
+                vtn=-f.vx*ny+f.vy*nx,vrn=f.vx*nx+f.vy*ny,gd=pw*dt/f.m*hg,
                 ard=Math.min(8,vtn*vtn/Math.max(d,20)+(vi-vrn)*.08),atd=(vt-vtn)*.07;
             f.vx+=(nx*ard-ny*atd)*gd;f.vy+=(ny*ard+nx*atd)*gd;
             if(d<90)f.gl=Math.max(f.gl,.5*(1-d/90));
+            if(f.hs===0&&d<OD*.9*f.rj){f.hs=3;f.or=Math.max(d,ORMIN);f.lam=Math.log(f.or/RC)/(6.283*f.nt*(OD>200?.8:1))}  /* vào đĩa: bắt đầu quay quanh */
           }
           if(f.hs!==1&&d<Math.max(30,HR*1.5)&&pw>.3){
             /* bị nuốt vào rồi bắn ra thành hai tia: PC bắn trái và phải, điện thoại bắn lên và xuống */
@@ -521,7 +599,7 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
       var m=f.sz*.5;if(f.x<m){f.x=m;f.vx=Math.abs(f.vx)*.9;f.w=Math.PI-f.w}else if(f.x>W-m){f.x=W-m;f.vx=-Math.abs(f.vx)*.9;f.w=Math.PI-f.w}
       if(f.y<m){f.y=m;f.vy=Math.abs(f.vy)*.9;f.w=-f.w}else if(f.y>H-m){f.y=H-m;f.vy=-Math.abs(f.vy)*.9;f.w=-f.w}
       var spd=Math.sqrt(f.vx*f.vx+f.vy*f.vy),a=Math.min(1,(.35+.65*Math.max(0,Math.sin(f.th)))*1.3+sw*Math.min(spd*.015,.2)+f.gl*.6);
-      ctx.globalAlpha=a;
+      ctx.globalAlpha=a*bdim;
       var z=Math.max(f.sz*1.1,5),el=1+Math.min(spd*(mode==='hole'&&f.hs?.14:.1),mode==='hole'&&f.hs?2.4:.9),cs=spd>.05?f.vx/spd:1,sn=spd>.05?f.vy/spd:0;
       ctx.setTransform(cs*DPR,sn*DPR,-sn*DPR,cs*DPR,f.x*DPR,f.y*DPR);
       ctx.drawImage(sprites[f.c],-z*el,-z,z*2*el,z*2);
@@ -529,7 +607,41 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
     }
     ctx.globalAlpha=1;ctx.setTransform(DPR,0,0,DPR,0,0);
     var cc=COLORS[color===6?0:color],cs2=cc[0]+','+cc[1]+','+cc[2];
-    if(pw>.01&&mode!=='hole'&&mode!=='fire'){var ra=40+40*pw;ctx.globalAlpha=.35*pw;ctx.drawImage(sprites[color===6?0:color],ptr.x-ra,ptr.y-ra,ra*2,ra*2);ctx.globalAlpha=1}
+    if(pw>.01&&mode!=='hole'&&mode!=='fire'&&mode!=='blast'){var ra=40+40*pw;ctx.globalAlpha=.35*pw;ctx.drawImage(sprites[color===6?0:color],ptr.x-ra,ptr.y-ra,ra*2,ra*2);ctx.globalAlpha=1}
+    if(mode==='blast'&&bst===1){
+      /* quả cầu đang nén: lõi sáng nở dần, nhịp đập nhanh dần, vài vòng sáng co về tâm */
+      var ci=color===6?0:color,ro=(9+22*ec)*(1+.05*Math.sin(s*(5+9*ec))),rk,ur2,rr;
+      ctx.globalAlpha=.3+.6*ec;ctx.drawImage(sprites[ci],bx-ro*5,by-ro*5,ro*10,ro*10);
+      ctx.globalAlpha=Math.min(1,.5+.5*ec);ctx.drawImage(core,bx-ro*.9,by-ro*.9,ro*1.8,ro*1.8);
+      ctx.strokeStyle='rgb('+cs2+')';ctx.lineWidth=1;
+      for(rk=0;rk<3;rk++){
+        ur2=(s*(.45+.35*ec)+rk/3)%1;rr=ro*1.4+BR*.55*Math.pow(1-ur2,1.6);
+        ctx.globalAlpha=.26*Math.sin(ur2*Math.PI)*(.35+.65*ec)*Math.min(1,bgate*2);
+        ctx.beginPath();ctx.arc(bx,by,rr,0,6.283);ctx.stroke();
+      }
+      ctx.globalAlpha=1;
+    }
+    for(var qi=fxs.length-1;qi>=0;qi--){
+      /* hiệu ứng nổ: tia chớp, ba sóng xung kích nối nhau, ánh tàn ở tâm */
+      var X=fxs[qi],tt=X.t+=dt;
+      if(tt>120){fxs.splice(qi,1);continue}
+      var xc=COLORS[X.c],xs=xc[0]+','+xc[1]+','+xc[2],uF=tt/24,uE=tt/70,ri,dur,ur3,Rr,al;
+      if(uF<1){
+        var fR=30+X.R*.5*(1-Math.pow(1-uF,3)),fa2=.95*(1-uF)*(1-uF),fg=ctx.createRadialGradient(X.x,X.y,0,X.x,X.y,fR);
+        fg.addColorStop(0,'rgba(255,255,255,'+fa2+')');fg.addColorStop(.25,'rgba('+xs+','+(fa2*.6)+')');fg.addColorStop(1,'rgba('+xs+',0)');
+        ctx.fillStyle=fg;ctx.fillRect(X.x-fR,X.y-fR,fR*2,fR*2);
+      }
+      for(ri=0;ri<3;ri++){
+        dur=55+ri*22;ur3=(tt-ri*6)/dur;
+        if(ur3<=0||ur3>=1)continue;
+        Rr=X.R*(1-ri*.2)*(1-Math.pow(1-ur3,3));al=(ri?.5:.85)*Math.pow(1-ur3,1.6);
+        ctx.strokeStyle=ri===1?'rgb('+xs+')':'rgb(255,248,235)';
+        ctx.globalAlpha=al*.2;ctx.lineWidth=(1-ur3)*9+2;ctx.beginPath();ctx.arc(X.x,X.y,Rr,0,6.283);ctx.stroke();
+        ctx.globalAlpha=al;ctx.lineWidth=(1-ur3)*2.2+.5;ctx.beginPath();ctx.arc(X.x,X.y,Rr,0,6.283);ctx.stroke();
+      }
+      if(uE<1){var eR=26+60*uE;ctx.globalAlpha=.6*(1-uE)*(1-uE);ctx.drawImage(sprites[X.c],X.x-eR,X.y-eR,eR*2,eR*2)}
+      ctx.globalAlpha=1;
+    }
     if(rp){rp.t+=dt;var ur=rp.t/45;
       if(ur>=1)rp=null;else{ctx.globalAlpha=.55*(1-ur)*(1-ur);ctx.strokeStyle='rgb('+cs2+')';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(rp.x,rp.y,20+ur*170,0,6.283);ctx.stroke();ctx.globalAlpha=1}}
     if(fl){fl.t+=dt;var uf=fl.t/18;
@@ -553,20 +665,29 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
   function syncCount(){
     var n=flies.length;shown=n;countEl.textContent=n+' con';
     lessB.setAttribute('aria-disabled',String(n<=MIN));moreB.setAttribute('aria-disabled',String(n>=MAX));
+    lockBlast();if(mode==='blast')setHint();
   }
 
   /* ===== con trỏ: chỉ theo một ngón/chuột đầu tiên, bỏ qua ngón thứ hai ===== */
-  function pos(e){var r=cv.getBoundingClientRect();ptr.x=e.clientX-r.left;ptr.y=e.clientY-r.top}
+  /* cảm ứng: ở chế độ xoáy và hố đen, tâm hiệu ứng nằm phía trên đầu ngón tay (FOFF px) để ngón tay không che mất */
+  var FOFF=80;
+  function pos(e){
+    var r=cv.getBoundingClientRect(),y=e.clientY-r.top;
+    ptr.x=e.clientX-r.left;
+    ptr.y=(e.pointerType==='touch'&&(mode==='swirl'||mode==='hole'||mode==='blast'))?Math.max(24,y-FOFF):y;
+  }
   cv.addEventListener('pointermove',function(e){if(pid===-1||e.pointerId===pid)pos(e)});
   cv.addEventListener('pointerdown',function(e){
     if(pid!==-1&&!e.isPrimary)return;
     if(e.pointerType==='mouse'&&e.button!==0)return;
     pid=e.pointerId;
     pos(e);ptr.active=true;ptr.down=true;lx=ptr.x;ly=ptr.y;cvx=cvy=0;ptr.t0=performance.now();trl=[];
-    if(mode==='fire'){if(!fw)fw={x:ptr.x,y:ptr.y,t:0,p:0,rx:ptr.x,ry:H-10}}else rp={x:ptr.x,y:ptr.y,t:0};
+    if(mode==='fire'){if(!fw)fw={x:ptr.x,y:ptr.y,t:0,p:0,rx:ptr.x,ry:H-10}}
+    else if(mode==='blast'){if(flies.length>=NEED){bst=1;bq=0;bgate=0;bx=ptr.x;by=ptr.y}else needMsg()}
+    else rp={x:ptr.x,y:ptr.y,t:0};
     try{cv.setPointerCapture(e.pointerId)}catch(_){}
   });
-  function up(e){if(e&&e.pointerId!==pid)return;pid=-1;ptr.down=false;ptr.active=false}
+  function up(e){if(e&&e.pointerId!==pid)return;pid=-1;ptr.down=false;ptr.active=false;if(mode==='blast')detonate()}
   cv.addEventListener('pointerup',up);
   cv.addEventListener('pointercancel',up);
   cv.addEventListener('lostpointercapture',up);
@@ -577,14 +698,16 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
   var mlist=document.getElementById('modes'),mbtn=document.getElementById('modebtn');
   function setList(o){mlist.hidden=!o;mbtn.setAttribute('aria-expanded',String(o))}
   mlist.addEventListener('click',function(e){
-    var b=e.target.closest('button');if(!b)return;var nm=b.dataset.m,wasShape=mode==='shape';
+    var b=e.target.closest('button');if(!b)return;
+    if(b.getAttribute('aria-disabled')==='true'){needMsg();return}
+    var nm=b.dataset.m,wasShape=mode==='shape';
     if(nm==='shape'){if(wasShape)shapeIdx=(shapeIdx+1)%SHAPES.length;spts=buildShape(shapeIdx);b.textContent='Hình: '+SHAPES[shapeIdx]}
     if(nm!==mode){
       /* dọn trạng thái của chế độ cũ: tên lửa pháo hoa, vệt vẽ, trạng thái hố đen */
-      fw=null;trl=[];
+      fw=null;trl=[];bst=0;bq=0;
       for(var i=0;i<flies.length;i++){flies[i].hs=0;flies[i].hj=0}
     }
-    mode=nm;setHint();document.getElementById('modename').textContent=b.textContent;if(!(nm==='shape'&&wasShape))setList(false);
+    mode=nm;setHint();document.getElementById('modename').textContent=(b.querySelector('.lbl')||b).textContent;if(!(nm==='shape'&&wasShape))setList(false);
     [].forEach.call(this.children,function(x){x.setAttribute('aria-pressed',String(x===b))});
   });
   document.getElementById('dots').addEventListener('click',function(e){
