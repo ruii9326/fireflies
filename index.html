@@ -121,7 +121,7 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
     <button type="button" data-m="follow" aria-pressed="true">Bay theo</button>
     <button type="button" data-m="swirl" aria-pressed="false">Xoáy</button>
     <button type="button" data-m="hole" aria-pressed="false">Hố đen</button>
-    <button type="button" class="has-need" data-m="blast" aria-pressed="false" aria-disabled="true"><span class="lbl">Vụ nổ</span><small class="need" id="need">từ 600 chú</small></button>
+    <button type="button" class="has-need" data-m="blast" aria-pressed="false" aria-disabled="true"><span class="lbl">Vụ nổ</span><small class="need" id="need">từ 500 chú</small></button>
     <button type="button" data-m="fire" aria-pressed="false">Pháo hoa</button>
     <button type="button" data-m="shape" aria-pressed="false">Tạo hình</button>
     <button type="button" data-m="flock" aria-pressed="false">Bầy</button>
@@ -138,7 +138,7 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
     <button type="button" class="dot" data-c="5" style="background:#b98cff" aria-label="Màu tím" aria-pressed="false"></button>
     <button type="button" class="dot" data-c="6" style="background:conic-gradient(#ffc857,#6fe3d6,#ff7a90,#96e66e,#6eaaff,#b98cff,#ffc857)" aria-label="Tất cả màu" aria-pressed="false"></button>
   </div>
-  <button type="button" class="btn" id="less" aria-disabled="false" title="Giảm 50 chú (tối thiểu 100). Giữ để giảm nhanh.">−50</button>
+  <button type="button" class="btn" id="less" aria-disabled="false" title="Giảm 50 chú (tối thiểu 0). Giữ để giảm nhanh.">−50</button>
   <button type="button" class="btn" id="more" aria-disabled="false" title="Thả thêm 50 chú (tối đa 1500). Giữ để thả nhanh.">+50</button>
   <button type="button" class="btn" id="reset" title="Về lại 150 chú">Làm lại</button>
   <span class="count" id="count" aria-live="polite"></span>
@@ -152,24 +152,26 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
   var reduce=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
   var W=0,H=0,DPR=1,oldW=0,oldH=0,rsT=0;
   /* số lượng đom đóm: luôn nằm trong khoảng MIN..MAX, mở web lên là DEF */
-  var MIN=100,MAX=1500,DEF=150,STEP=50;
+  var MIN=0,MAX=1500,DEF=150,STEP=50;
   /* hướng tia sáng của hố đen: PC bắn ngang, điện thoại bắn dọc, tablet theo chiều dài của màn hình */
   var JV=false,JSPAN=400;
   var COLORS=[[255,200,87],[111,227,214],[255,122,144],[150,230,110],[110,170,255],[185,140,255]];
   var sprites=COLORS.map(makeSprite),core=makeCore();
   var color=0,mode='follow',flies=[],last=0,pw=0,pr=0,fw=null,fl=null,rp=null,hb=0,fa=16.7,lite=false;
   var ptr={x:0,y:0,active:false,down:false,t0:0},pid=-1,lx=0,ly=0,cvx=0,cvy=0;
-  var trl=[],head=new Int32Array(0),nxt=new Int32Array(0),shapeIdx=0,spts=null,shapeCache=[],fontOK=false;
+  var spk=[],trl=[],head=new Int32Array(0),nxt=new Int32Array(0),shapeIdx=0,spts=null,shapeCache=[],fontOK=false;
   var SHAPES=['Trái tim','Vòng tròn','Ngôi sao','Chữ'];
   var countEl=document.getElementById('count'),lessB=document.getElementById('less'),moreB=document.getElementById('more'),shown=-1;
   /* chế độ Vụ nổ: bst=1 đang nén (bq=độ nén 0..1), bst=2 sau khi nhả: rung, bắn vài nhịp sóng xung kích rồi mới nổ.
      (bx,by)=tâm quả cầu, fxs=hiệu ứng đang chạy (sóng xung kích và vụ nổ).
-     Chỉ dùng được khi đủ NEED chú: 600 trên PC và tablet, 200 trên điện thoại */
-  var bst=0,bq=0,bgate=0,bx=0,by=0,bgt=0,fxs=[],bw=0,BT1=40,BN=3,BPI=15,BDET=14,bpuls=0,bec=0,bsx=0,bsy=0,bpg=0,bph=0,phone=false,NEED=600,needT=0,
+     Chỉ dùng được khi đủ NEED chú: 500 trên PC và tablet, 200 trên điện thoại.
+     Chạm nhanh (giữ dưới MINQ) thì không nổ; giữ càng lâu càng nổ mạnh.
+     Tầm hút (brg) mở rộng dần theo thời gian giữ: giữ ít thì chỉ đom đóm ở gần bị hút và nổ, cả đàn chỉ vào hết khi giữ đủ lâu */
+  var bst=0,bq=0,bgate=0,bx=0,by=0,bgt=0,fxs=[],bw=0,BT1=40,BN=3,BPI=15,BDET=14,bpuls=0,bec=0,bsx=0,bsy=0,bpg=0,bph=0,phone=false,NEED=500,needT=0,MINQ=.08,brg=110,
       blastB=document.querySelector('[data-m=blast]'),needEl=document.getElementById('need');
   function pick(){return color===6?Math.floor(Math.random()*COLORS.length):color}
 
-  /* gợi ý số đom đóm: điện thoại 200 chú, PC và tablet 600 chú */
+  /* gợi ý số đom đóm: điện thoại 200 chú, PC và tablet 500 chú */
   var mac=/Mac|iPhone|iPad/i.test(navigator.platform||navigator.userAgent||''),tipEl=document.getElementById('tip');
   function setTip(){
     tipEl.textContent=touch
@@ -220,7 +222,7 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
       flock:V+' để dẫn đầu bầy. Đàn tự bay theo bầy như chim sáo.',
       fire:C+' để bắn pháo hoa.',
       blast:flies.length<NEED?'Vụ nổ cần từ '+NEED+' chú đom đóm. Hiện có '+flies.length+' chú, bấm +50 để thả thêm.'
-        :V+' để nén đàn thành quả cầu sáng, giữ càng lâu càng nén chặt. Nhả ra: đàn rung lên, phát sóng xung kích rồi nổ tung.'};
+        :'Giữ để nén thành quả cầu sáng rực, thả ra sẽ khiến quả cầu đom đóm phát nổ.'};
     document.getElementById('hint').textContent=T[mode];
   }
   function explode(){
@@ -394,7 +396,7 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
     ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='medium';
     sctx.setTransform(DPR,0,0,DPR,0,0);
     /* phone: tia hố đen bắn dọc. tablet: bắn theo chiều dài màn hình. PC: bắn ngang */
-    phone=touch&&Math.min(W,H)<600;NEED=phone?200:600;needEl.textContent='từ '+NEED+' chú';lockBlast();
+    phone=touch&&Math.min(W,H)<600;NEED=phone?200:500;needEl.textContent='từ '+NEED+' chú';lockBlast();
     JV=touch&&(phone||H>W);
     JSPAN=Math.min((JV?H:W)*.5,1100);
     paintBg();drawSky(skyT);setHint();setTip();
@@ -412,7 +414,7 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
     if(flies.length>MAX)flies.splice(0,flies.length-MAX);
   }
   function reset(){
-    flies=[];fw=null;fl=null;rp=null;trl=[];hb=0;bst=0;bq=0;fxs=[];bgt=0;
+    flies=[];fw=null;fl=null;rp=null;trl=[];spk=[];hb=0;bst=0;bq=0;fxs=[];bgt=0;
     spawn(W/2,H/2,DEF,Math.min(W,H)*.35);
   }
   /* nhả tay: cả đàn nổ bung theo ba lớp vỏ (nhanh, vừa, chậm) với cánh hoa và chút xoáy, kèm tia chớp và sóng xung kích */
@@ -420,9 +422,14 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
   function release(){
     if(bst!==1)return;
     if(flies.length<NEED){bst=0;bq=0;return}
-    bec=bq*bq*(3-2*bq);bq=0;
+    /* chưa giữ đủ lâu (chạm nhanh): không nổ, chỉ gợn một vòng sáng mờ */
+    if(bq<MINQ){bst=0;bq=0;rp={x:bx,y:by,t:0};return}
+    /* sức nổ 0..1 tăng dần theo thời gian giữ: giữ ngắn nổ nhẹ, giữ đủ lâu nổ hết cỡ */
+    for(var ri2=0;ri2<flies.length;ri2++){var rf=flies[ri2],rdx=rf.x-bx,rdy=rf.y-by;rf.bp=rdx*rdx+rdy*rdy<brg*brg}  /* chỉ những con trong tầm hút mới dồn vào và nổ */
+    var tq=(bq-MINQ)/(1-MINQ);
+    bec=tq*tq*(3-2*tq);bq=0;
     bst=2;bw=0;bpuls=0;bsx=bsy=0;bpg=0;
-    BT1=26+34*bec;BN=bec>.5?3:2;
+    BT1=22+38*bec;BN=bec>.6?3:(bec>.2?2:1);
   }
   /* một nhịp sóng xung kích: vòng sáng lan ra, cả quả cầu phình lên rồi bị nén lại */
   function firePulse(i){
@@ -430,28 +437,28 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
     fxs.push({p:1,x:bx,y:by,t:0,R:mx*(.2+.09*i),c:color===6?Math.floor(Math.random()*COLORS.length):color});
     bpg=1;
     for(j=0;j<flies.length;j++){
-      f=flies[j];dx=f.x-bx;dy=f.y-by;
+      f=flies[j];if(!f.bp)continue;dx=f.x-bx;dy=f.y-by;
       a=dx*dx+dy*dy>2?Math.atan2(dy,dx):Math.random()*6.283;
-      v=(3+1.6*i)*(.6+Math.random()*.8);
+      v=(3+1.6*i)*(.45+.55*bec)*(.6+Math.random()*.8);
       f.vx+=Math.cos(a)*v;f.vy+=Math.sin(a)*v;f.gl=1;
     }
   }
   function detonate(){
     if(bst!==2)return;
     bst=0;
-    var ec=bec,pwr=.25+.75*ec,mx=Math.min(W,H),
+    var ec=bec,pwr=.12+.88*ec,mx=Math.min(W,H),
         pet=5+Math.floor(Math.random()*4),rot=Math.random()*6.283,spin=Math.random()<.5?-1:1,i,f,dx,dy,d,a,v,l,near;
     for(i=0;i<flies.length;i++){
-      f=flies[i];dx=f.x-bx;dy=f.y-by;d=Math.sqrt(dx*dx+dy*dy);
+      f=flies[i];if(!f.bp)continue;dx=f.x-bx;dy=f.y-by;d=Math.sqrt(dx*dx+dy*dy);
       a=d>3?Math.atan2(dy,dx):Math.random()*6.283;a+=(Math.random()-.5)*.3;
       l=f.u<.2?1:(f.u<.55?.68:.42);
       near=.5+.5/(1+d/(mx*.3));
-      v=mx*(.014+.021*pwr)*l*(1+.2*Math.cos(pet*(a-rot)))*(.88+Math.random()*.24)*near;
+      v=mx*(.007+.03*pwr)*l*(1+.2*Math.cos(pet*(a-rot)))*(.88+Math.random()*.24)*near;
       f.vx=Math.cos(a)*v-Math.sin(a)*v*.16*spin;
       f.vy=Math.sin(a)*v+Math.cos(a)*v*.16*spin;
       f.gl=1;f.bk=Math.random()<.4?30+Math.random()*90:0;
     }
-    fxs.push({x:bx,y:by,t:0,R:mx*(.32+.48*pwr),c:color===6?Math.floor(Math.random()*COLORS.length):color});
+    fxs.push({x:bx,y:by,t:0,R:mx*(.14+.66*pwr),c:color===6?Math.floor(Math.random()*COLORS.length):color});
     bgt=1;bq=0;
   }
   function addFlies(){var n=Math.min(STEP,MAX-flies.length);if(n>0)spawn(W/2,H/2,n,Math.min(W,H)*.3)}
@@ -480,13 +487,17 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
     /* hố đen: OD = bán kính đĩa quỹ đạo ngoài cùng, RC = bán kính bị nuốt, ORMIN = quỹ đạo nhỏ nhất khi vào đĩa */
     var OD=Math.max(110,Math.min(W,H)*.3),RC=Math.max(30,HR*1.5),ORMIN=Math.min(RC*4.2,OD*.8);
     if(fw){
-      /* đợi đàn tập hợp: tên lửa chỉ bay lên và nổ khi phần lớn đom đóm đã dồn về đuôi nó */
+      /* đợi đàn tập hợp: tên lửa chỉ bay lên và nổ khi phần lớn đom đóm đã dồn về đuôi nó.
+         sv = tốc độ bay lên (0..1): càng nhanh thì đuôi càng dài, gần đỉnh thì đuôi co lại thành quả cầu sáng */
       fw.t+=dt;
-      var nc=0,gx0=fw.rx,gy0=fw.ry+25;
-      for(j=0;j<flies.length;j++){var gdx=flies[j].x-gx0,gdy=flies[j].y-gy0;if(gdx*gdx+gdy*gdy<12100)nc++}
+      var nc=0,fwr=110+(fw.L-34)*.9,gx0=fw.rx,gy0=fw.ry+25+(fw.L-34)*.5,fwr2=fwr*fwr;
+      for(j=0;j<flies.length;j++){var gdx=flies[j].x-gx0,gdy=flies[j].y-gy0;if(gdx*gdx+gdy*gdy<fwr2)nc++}
       var frac=flies.length?nc/flies.length:1;
+      fw.frac+=(frac-fw.frac)*Math.min(1,.2*dt);
       fw.p+=dt*Math.min(1,Math.max(0,(frac-.3)/.55));
       var u=Math.min(1,fw.p/55),e=1-Math.pow(1-u,2.4);
+      fw.u=u;fw.sv=Math.pow(1-u,1.4)*Math.min(1,u*6);fw.L=34+150*fw.sv;
+      if(!fw.go&&fw.p>.6){fw.go=true;fxs.push({p:1,x:fw.rx,y:fw.ry,t:0,R:Math.min(W,H)*.14,c:pick()})}  /* sóng xung kích lúc phóng */
       fw.rx=fw.x+Math.sin(fw.t*.3)*4*(1-u);fw.ry=(H-10)+(fw.y-H+10)*e;
       if(fw.p>=62&&(frac>=.9||fw.t>420)){fl={x:fw.rx,y:fw.ry,t:0,c:explode()};fw=null}
     }
@@ -498,13 +509,14 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
         bq=Math.min(1,bq+dt/150);bgate+=(1-bgate)*Math.min(1,.04*dt);
         bx=ptr.x;by=ptr.y;
         ec=bq*bq*(3-2*bq);
+        brg=110+(Math.hypot(W,H)-110)*ec;
         bph+=dt*(.007+.015*ec);
       }
     }else if(mode==='blast'&&bst===2){
       /* giai đoạn rung: cả quả cầu run lên, càng lúc càng mạnh, rồi bắn các nhịp sóng và nổ */
       bw+=dt;bu=Math.min(1,bw/BT1);bpg*=Math.pow(.9,dt);bph+=dt*.03;
-      var bA=.4+2.2*Math.pow(bu,1.6);bsx=(Math.random()-.5)*2*bA;bsy=(Math.random()-.5)*2*bA;
-      bj=.5+2.5*Math.pow(bu,1.6);
+      var bA=(.4+2.2*Math.pow(bu,1.6))*(.5+.5*bec);bsx=(Math.random()-.5)*2*bA;bsy=(Math.random()-.5)*2*bA;
+      bj=(.5+2.5*Math.pow(bu,1.6))*(.5+.5*bec);
       while(bpuls<BN&&bw>=BT1+bpuls*BPI){firePulse(bpuls);bpuls++}
       if(bw>=BT1+(BN-1)*BPI+BDET)detonate();
     }
@@ -522,13 +534,20 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
       f.th+=f.sp*dt/60;f.gl*=.93;f.jt*=.985;
       if(f.bk>0){f.bk-=dt;if(f.bk<=0)f.gl=1}  /* tàn lửa lép bép sau vụ nổ */
       if(fw){
-        var gt=Math.min(1,fw.t/12),sx=3+f.h*10,
-            gx=fw.rx+Math.cos(f.ph+fw.t*.2)*sx,gy=fw.ry+4+f.h*40+Math.sin(f.ph*1.3+fw.t*.25)*sx,
-            ax=Math.max(-3.5,Math.min(3.5,(gx-f.x)*.1)),ay=Math.max(-3.5,Math.min(3.5,(gy-f.y)*.1));
+        /* gom vào: đàn cuộn xoáy ốc về đầu tên lửa như phễu, sáng dần khi đến gần.
+           bay lên: đàn xếp thành đuôi sao chổi hai sợi xoắn vào nhau, sợi gần đầu thì sáng hơn */
+        var gt=Math.min(1,fw.t/12),fsv=fw.sv,tl=f.h*fw.L,fsx=3+f.h*10,
+            hx=Math.cos(f.ph+fw.t*.2)*fsx,hy=f.h*40+Math.sin(f.ph*1.3+fw.t*.25)*fsx,
+            tg=(f.u<.5?0:3.1416)+f.ph*.12+fw.t*.3-tl*.05,
+            gx=fw.rx+hx+(Math.cos(tg)*(2+tl*.1)-hx)*fsv,gy=fw.ry+4+hy+(tl-hy)*fsv,
+            gdx2=gx-f.x,gdy2=gy-f.y,gdd=Math.sqrt(gdx2*gdx2+gdy2*gdy2)+1,cl=3.5+7*fsv,
+            sws=Math.min(1.5,gdd*.008)*Math.min(1,gdd/90)*(1-fsv),
+            ax=Math.max(-cl,Math.min(cl,gdx2*.1))-gdy2/gdd*sws,ay=Math.max(-cl,Math.min(cl,gdy2*.1))+gdx2/gdd*sws;
         f.vx+=(ax-f.vx*.2)*gt*dt;f.vy+=(ay-f.vy*.2)*gt*dt;
+        f.gl=Math.max(f.gl,(Math.max(0,1-gdd/240)*.4+.55*(1-f.h)*fsv)*gt);
       }
       if(f.fb>.01){f.vy+=.1*f.fb*dt;f.fb*=Math.pow(.992,dt)}
-      if(bst===2&&mode==='blast'){
+      if(bst===2&&mode==='blast'&&f.bp){
         /* đàn bị giữ chặt ở tâm và rung: lò xo mạnh kéo về tâm (cũng đang rung), cộng nhiễu ngẫu nhiên tăng dần */
         var wx=bx+bsx-f.x,wy=by+bsy-f.y,wdm=Math.pow(.82,dt);
         f.vx=(f.vx+(wx*.09+(Math.random()-.5)*bj)*dt)*wdm;f.vy=(f.vy+(wy*.09+(Math.random()-.5)*bj)*dt)*wdm;
@@ -555,10 +574,12 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
         else if(mode==='blast'){
           /* đang nén: gom đàn đúng như chế độ bay theo, độ nén chỉ làm quả cầu sáng dần */
           if(bst===1){
-            f.vx+=nx*p;f.vy+=ny*p;
-            if(ec>0){
+            /* bg: 1 trong tầm hút, giảm dần về 0 ở mép tầm. Con nằm ngoài tầm thì không bị hút */
+            var bg=Math.max(0,Math.min(1,(brg-d)/(brg*.25)));
+            f.vx+=nx*p*bg;f.vy+=ny*p*bg;
+            if(ec>0&&bg>0){
               /* nén chặt: nửa đầu giống bay theo, về sau lò xo kéo thẳng vào tâm mạnh dần và ma sát tăng để đàn dồn thành một khối */
-              var cq=Math.min(d*ec*ec*.07,1.2*ec*ec)*pw*dt,cdm=Math.pow(1-.14*ec*ec,dt);
+              var cq=Math.min(d*ec*ec*.07,1.2*ec*ec)*bg*pw*dt,cdm=Math.pow(1-.14*ec*ec*bg,dt);
               f.vx=(f.vx+nx*cq)*cdm;f.vy=(f.vy+ny*cq)*cdm;
             }
             f.gl=Math.max(f.gl,ec*.35*Math.max(0,1-d/140));
@@ -647,6 +668,42 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
     }
     ctx.globalAlpha=1;ctx.setTransform(DPR,0,0,DPR,0,0);
     var cc=COLORS[color===6?0:color],cs2=cc[0]+','+cc[1]+','+cc[2];
+    /* pháo hoa: vệt sáng sau đuôi, đầu tên lửa phát sáng (to dần khi đàn đã gom đủ, bùng lên trước khi nổ),
+       vòng năng lượng co vào lúc gom đàn, và tàn lửa rơi lép bép từ đuôi */
+    if(fw){
+      var fpx=fw.rx,fpy=fw.ry,fci=color===6?0:color,fch=Math.min(1,fw.frac),fv=fw.sv,
+          fbl=Math.pow(Math.max(0,(fw.u-.85)/.15),2),fcy=fpy+4+16*(1-fv),
+          fhr=(12+24*fch*fch+8*fv+30*fbl)*(1+.1*Math.sin(fw.t*.5)),fkk;
+      if(fv>.02){
+        var flg=ctx.createLinearGradient(fpx,fpy,fpx,fpy+fw.L*1.3);
+        flg.addColorStop(0,'rgba(255,248,235,'+(.55*fv)+')');flg.addColorStop(.35,'rgba('+cs2+','+(.25*fv)+')');flg.addColorStop(1,'rgba('+cs2+',0)');
+        ctx.globalAlpha=1;ctx.strokeStyle=flg;ctx.lineWidth=2+2*fv;ctx.beginPath();ctx.moveTo(fpx,fpy);ctx.lineTo(fpx,fpy+fw.L*1.3);ctx.stroke();
+      }
+      if(fv<.9){
+        ctx.strokeStyle='rgb('+cs2+')';ctx.lineWidth=1;
+        for(fkk=0;fkk<2;fkk++){
+          var fur=(fw.t/70+fkk*.5)%1,frr=fhr*1.2+170*Math.pow(1-fur,1.5)*(1-fv);
+          ctx.globalAlpha=.3*Math.sin(fur*Math.PI)*(.25+.75*fch)*(1-fv);
+          ctx.beginPath();ctx.arc(fpx,fcy,frr,0,6.283);ctx.stroke();
+        }
+      }
+      ctx.globalAlpha=Math.min(1,.3+.5*fch+.2*fv);ctx.drawImage(sprites[fci],fpx-fhr*2.4,fcy-fhr*2.4,fhr*4.8,fhr*4.8);
+      ctx.globalAlpha=Math.min(1,.4+.6*fch);ctx.drawImage(core,fpx-fhr*.45,fcy-fhr*.45,fhr*.9,fhr*.9);
+      if(fv>.05){
+        var fns=Math.floor(fv*2.4*dt+Math.random());
+        while(fns-->0&&spk.length<320)spk.push({x:fpx+(Math.random()-.5)*5,y:fpy+4+Math.random()*12,vx:(Math.random()-.5)*1.8,vy:.4+Math.random()*1.6,t:0,l:26+Math.random()*34,c:pick(),z:2.5+Math.random()*3.5});
+      }
+      ctx.globalAlpha=1;
+    }
+    for(var ski=spk.length-1;ski>=0;ski--){
+      var sk2=spk[ski];sk2.t+=dt;
+      if(sk2.t>=sk2.l){spk.splice(ski,1);continue}
+      sk2.vy+=.045*dt;sk2.vx*=Math.pow(.985,dt);sk2.x+=sk2.vx*dt;sk2.y+=sk2.vy*dt;
+      var sku=1-sk2.t/sk2.l,skz=sk2.z*(.5+.5*sku)*2.2;
+      ctx.globalAlpha=sku*sku*(.45+.55*Math.random())*.9;
+      ctx.drawImage(sprites[sk2.c],sk2.x-skz,sk2.y-skz,skz*2,skz*2);
+    }
+    ctx.globalAlpha=1;
     if(pw>.01&&mode!=='hole'&&mode!=='fire'&&mode!=='blast'){var ra=40+40*pw;ctx.globalAlpha=.35*pw;ctx.drawImage(sprites[color===6?0:color],ptr.x-ra,ptr.y-ra,ra*2,ra*2);ctx.globalAlpha=1}
     if(mode==='blast'&&(bst===1||bst===2)){
       /* quả cầu: lúc nén thì co nhỏ lại, sáng dần, nhịp đập nhanh dần và hơi run; lúc rung thì nhấp nháy và phập phồng theo từng nhịp sóng */
@@ -737,7 +794,7 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
     if(e.pointerType==='mouse'&&e.button!==0)return;
     pid=e.pointerId;
     pos(e);ptr.active=true;ptr.down=true;lx=ptr.x;ly=ptr.y;cvx=cvy=0;ptr.t0=performance.now();trl=[];
-    if(mode==='fire'){if(!fw)fw={x:ptr.x,y:ptr.y,t:0,p:0,rx:ptr.x,ry:H-10}}
+    if(mode==='fire'){if(!fw)fw={x:ptr.x,y:ptr.y,t:0,p:0,rx:ptr.x,ry:H-10,u:0,sv:0,L:34,frac:0,go:false}}
     else if(mode==='blast'){if(bst===2){/* đang rung và chuẩn bị nổ: bỏ qua */}else if(flies.length>=NEED){bst=1;bq=0;bgate=0;bph=0;bx=ptr.x;by=ptr.y}else needMsg()}
     else rp={x:ptr.x,y:ptr.y,t:0};
     try{cv.setPointerCapture(e.pointerId)}catch(_){}
@@ -759,7 +816,7 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
     if(nm==='shape'){if(wasShape)shapeIdx=(shapeIdx+1)%SHAPES.length;spts=buildShape(shapeIdx);b.textContent='Hình: '+SHAPES[shapeIdx]}
     if(nm!==mode){
       /* dọn trạng thái của chế độ cũ: tên lửa pháo hoa, vệt vẽ, trạng thái hố đen */
-      fw=null;trl=[];bst=0;bq=0;
+      fw=null;trl=[];spk=[];bst=0;bq=0;
       for(var i=0;i<flies.length;i++){flies[i].hs=0;flies[i].hj=0}
     }
     mode=nm;setHint();document.getElementById('modename').textContent=(b.querySelector('.lbl')||b).textContent;if(!(nm==='shape'&&wasShape))setList(false);
